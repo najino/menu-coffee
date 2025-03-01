@@ -99,15 +99,16 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
 ## TODO
-- [] Basic Setup
-- [] Create Entity
-- [] Product CRUD
-- [] Product Status
-- [] Fetch Product List 
-- [] singup With UserName And Password
-- [] Login With UserName And Password
-- [] Admin Panel
-- [] OpenApi Documentation
-- [] Postman Collection
-- [] Unit Test 
-- [] E2E Test 
+- [x] Basic Setup
+- [ ] Create Entity
+- [ ] Create Abstract Repository
+- [ ] Product CRUD
+- [ ] Product Status
+- [ ] Fetch Product List 
+- [ ] singup With UserName And Password
+- [ ] Login With UserName And Password
+- [ ] Admin Panel
+- [ ] OpenApi Documentation
+- [ ] Postman Collection
+- [ ] Unit Test 
+- [ ] E2E Test 
