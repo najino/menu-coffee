@@ -28,7 +28,7 @@ export class MongoDbService implements OnModuleInit {
 			});
 	}
 
-	getCollection<T extends Collection>(collectionName: CollectionName) {
+	getCollection<T extends Document>(collectionName: CollectionName) {
 		return this.db.collection<T>(collectionName as unknown as string);
 	}
 }
