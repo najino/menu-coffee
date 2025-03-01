@@ -101,6 +101,7 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 ## TODO
 - [x] Basic Setup
 - [ ] Create Entity
+- [ ] Create Abstract Repository
 - [ ] Product CRUD
 - [ ] Product Status
 - [ ] Fetch Product List 
