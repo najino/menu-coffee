@@ -14,6 +14,7 @@ export class UserService {
         try {
             // check username is unique or not
             const isUserNameUnique = await this.userRepository.findOne({ username });
+
             if (isUserNameUnique)
                 throw new ConflictException("username is exsist before.")
 
@@ -39,8 +40,13 @@ export class UserService {
     }
 
 
-    login(credential: LoginUserDto) {
-        return "user Login "
+    login({ password, username }: LoginUserDto) {
+        try {
+            return true;
+        } catch (err) {
+            this.logger.error(err)
+            throw new InternalServerErrorException(err)
+        }
     }
 
 }
