@@ -3,6 +3,7 @@ import { UserRepository } from './user.repository';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { LoginUserDto } from './dtos/login-user.dto';
 import { genSalt, hash } from 'bcryptjs';
+import { ObjectId } from 'mongodb';
 
 @Injectable()
 export class UserService {
@@ -10,7 +11,7 @@ export class UserService {
     constructor(private readonly userRepository: UserRepository) { }
 
 
-    async createUser({ password, username }: CreateUserDto) {
+    async createUser({ password, username }: CreateUserDto): Promise<{ msg: string, id: ObjectId }> {
         try {
             // check username is unique or not
             const isUserNameUnique = await this.userRepository.findOne({ username });
