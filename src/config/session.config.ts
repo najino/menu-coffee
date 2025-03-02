@@ -11,7 +11,8 @@ export function CreateSession(app: INestApplication) {
 
     const store = new MongoDbStore({
         collection: "sessions",
-        uri: (process.env as unknown as IEnv).MONGO_URI
+        databaseName: "cofee",
+        uri: (process.env as unknown as IEnv).MONGO_URI,
     })
 
     const sessionOption: SessionOptions = {
@@ -19,6 +20,10 @@ export function CreateSession(app: INestApplication) {
         resave: false,
         saveUninitialized: true,
         store,
+        cookie: {
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        }
     }
 
 
