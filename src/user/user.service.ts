@@ -1,9 +1,10 @@
-import { ConflictException, HttpException, Injectable, InternalServerErrorException, Logger, } from '@nestjs/common';
+import { ConflictException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException, } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { LoginUserDto } from './dtos/login-user.dto';
-import { genSalt, hash } from 'bcryptjs';
-import { ObjectId } from 'mongodb';
+import { compare, genSalt, hash } from 'bcryptjs';
+import { ObjectId, WithId } from 'mongodb';
+import { User } from './entity/user.entity';
 
 @Injectable()
 export class UserService {
@@ -41,13 +42,19 @@ export class UserService {
     }
 
 
-    login({ password, username }: LoginUserDto) {
-        try {
-            return true;
-        } catch (err) {
-            this.logger.error(err)
-            throw new InternalServerErrorException(err)
-        }
+    async login({ password, username }: LoginUserDto): Promise<WithId<User>> {
+        // check user 
+        const user = await this.userRepository.findOne({ username });
+        if (!user)
+            throw new NotFoundException("invalid credential.")
+
+        // validate password
+        const isValidPassword = await compare(password, user.password)
+
+        if (!isValidPassword)
+            throw new NotFoundException("invalid credential")
+
+        return user;
     }
 
 }

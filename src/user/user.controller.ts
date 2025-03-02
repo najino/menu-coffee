@@ -1,9 +1,10 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, Session } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { LoginUserDto } from './dtos/login-user.dto';
 import { IsAuth } from '../decorator/auth.decorator';
 import { ApiBody, ApiConflictResponse, ApiCreatedResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { Request } from 'express';
 
 @Controller('user')
 export class UserController {
@@ -29,7 +30,14 @@ export class UserController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Body() loginDto: LoginUserDto) {
-    return this.userService.login(loginDto)
+  async login(@Body() loginDto: LoginUserDto, @Req() req: Request) {
+    const user = await this.userService.login(loginDto)
+
+    req.session.user = {
+      id: user._id,
+      username: user.username
+    }
+
+    return { msg: "user login successfully" }
   }
 }
