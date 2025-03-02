@@ -3,6 +3,8 @@ import { ProductModule } from "./product/product.module";
 import { UserModule } from "./user/user.module";
 import { DatabaseModule } from "./database/database.module";
 import { ConfigModule } from "@nestjs/config";
+import { APP_GUARD } from "@nestjs/core";
+import { AuthGuard } from "./guard/auth.guard";
 
 @Module({
 	imports: [
@@ -16,5 +18,11 @@ import { ConfigModule } from "@nestjs/config";
 		UserModule,
 		DatabaseModule,
 	],
+	providers: [
+		{
+			provide: APP_GUARD,
+			useClass: AuthGuard
+		}
+	]
 })
-export class AppModule {}
+export class AppModule { }
