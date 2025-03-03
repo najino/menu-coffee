@@ -1,7 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Type } from 'class-transformer'
-import { ArrayMinSize, IsArray, IsBoolean, IsIn, IsNotEmpty, IsNumberString, IsOptional, IsString } from "class-validator";
-import Decimal from "decimal.js";
+import { ArrayMinSize, IsArray, IsIn, IsNotEmpty, IsNumberString, IsOptional, IsString } from "class-validator";
 
 export class CreateProductDto {
     @IsNotEmpty({ message: "name is required." })
