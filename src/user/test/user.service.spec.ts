@@ -2,7 +2,7 @@ import { Test } from "@nestjs/testing"
 import { UserService } from "../user.service"
 import { UserRepository } from "../user.repository"
 import { ObjectId } from "mongodb"
-import { ConflictException } from "@nestjs/common"
+import { ConflictException, NotFoundException } from "@nestjs/common"
 import * as bcrypt from 'bcryptjs'
 
 
@@ -68,5 +68,45 @@ describe("User Service Testing", () => {
             })
         })
     })
-    describe("Login User", () => { })
+    describe("Login User", () => {
+        it("should be throw An Error If User Does not found", () => {
+            jest.spyOn(userRepositoryMock, 'findOne').mockResolvedValueOnce(null)
+
+            const promise = service.login({ username: "usernaem", password: "pass" })
+            expect(promise).rejects.toThrow(NotFoundException)
+            expect(promise).rejects.toThrow("invalid credential.")
+        })
+
+
+        it("should be thorw an Error If Credentials are invalid", () => {
+            let user = {
+                _id: "user-id" as unknown as ObjectId,
+                username: "username",
+                password: "password"
+            }
+            jest.spyOn(userRepositoryMock, 'findOne').mockResolvedValueOnce(user)
+
+            jest.spyOn(bcrypt, 'compare').mockResolvedValueOnce(false as never)
+
+            const promise = service.login({ username: "usernaem", password: "pass" })
+            expect(promise).rejects.toThrow(NotFoundException)
+            expect(promise).rejects.toThrow("invalid credential.")
+        })
+
+
+        it("should be login successful", () => {
+            let user = {
+                _id: "user-id" as unknown as ObjectId,
+                username: "username",
+                password: "password"
+            }
+            jest.spyOn(userRepositoryMock, 'findOne').mockResolvedValueOnce(user)
+
+            jest.spyOn(bcrypt, 'compare').mockResolvedValueOnce(true as never)
+
+            const promise = service.login({ username: "usernaem", password: "pass" })
+
+            expect(promise).resolves.toEqual(user)
+        })
+    })
 })

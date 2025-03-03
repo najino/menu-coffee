@@ -52,7 +52,7 @@ export class UserService {
         const isValidPassword = await compare(password, user.password)
 
         if (!isValidPassword)
-            throw new NotFoundException("invalid credential")
+            throw new NotFoundException("invalid credential.")
 
         return user;
     }
