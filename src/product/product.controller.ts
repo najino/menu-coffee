@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, ParseFilePipeBuilder, ParseIntPipe, Patch, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpStatus, Param, ParseFilePipeBuilder, ParseIntPipe, Patch, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { IsAuth } from '../decorator/auth.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { PaginationDto } from './dtos/get-query.dto';
 
 @Controller('product')
 export class ProductController {
@@ -14,14 +15,14 @@ export class ProductController {
   @IsAuth()
   createProduct(@Body() createProductDto: CreateProductDto, @UploadedFile("file", new ParseFilePipeBuilder().
     addFileTypeValidator({ fileType: /^image\/(jpeg|png|jpg)$/ }).
-    addMaxSizeValidator({ maxSize: 5 * 1024 * 1024, message: "file must be lower than 5Mb" })
+    addMaxSizeValidator({ maxSize: 5 * 1024 * 1024, message: "photo must be lower than 5Mb" })
     .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY })) img: Express.Multer.File) {
     return this.productService.createProduct(createProductDto, img)
   }
 
   @Get()
-  findAll() {
-    return this.productService.findAll();
+  findAll(@Query() { limit, page }: PaginationDto) {
+    return this.productService.findAll(+limit, +page);
   }
 
 

@@ -59,7 +59,13 @@ export class ProductService {
 
 
 
-    findAll() { }
+    async findAll(limit?: number, page?: number) {
+        limit = limit || 10;
+        page = page || 1
+        const skip = (page - 1) * limit;
+
+        return ((await this.productRepository.findAll()).limit(limit).skip(skip)).toArray();
+    }
 
 
     update(id: number) { }

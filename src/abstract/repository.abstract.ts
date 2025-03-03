@@ -13,7 +13,7 @@ export class Repository<T extends Document> implements IRepo<T> {
         return this.model.deleteOne(filter)
     }
 
-    async findAll(where: Filter<T>, options?: FindOptions) {
+    async findAll(where?: Filter<T>, options?: FindOptions) {
         return this.model.find(where || {}, options)
     }
 
