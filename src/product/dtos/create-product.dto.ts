@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { ArrayMinSize, IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { Type } from 'class-transformer'
+import { ArrayMinSize, IsArray, IsBoolean, IsIn, IsNotEmpty, IsNumberString, IsOptional, IsString } from "class-validator";
 import Decimal from "decimal.js";
 
 export class CreateProductDto {
@@ -8,10 +9,10 @@ export class CreateProductDto {
     @ApiProperty()
     name: string
 
-    @IsString({ message: "please send as string format." })
+    @IsNumberString()
     @IsNotEmpty({ message: "price cannot be empty." })
     @ApiProperty()
-    price: Decimal
+    price: string
 
     @IsOptional()
     @IsArray({ message: "please enter array of string in models." })
@@ -27,7 +28,8 @@ export class CreateProductDto {
 
 
     @IsNotEmpty({ message: "status cannot be empty" })
-    @IsBoolean({ message: "status must be boolean." })
+    @IsString({ message: "status must be string." })
+    @IsIn(["1", "0"], { message: "status must be 0 or 1." })
     @ApiProperty({ description: "a product is exsist or not." })
-    status: boolean
+    status: string
 }

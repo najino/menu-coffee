@@ -4,10 +4,13 @@ const session = require('express-session');
 import { ValidationPipe } from '@nestjs/common';
 import { CreateSession } from './config/session.config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as express from 'express'
+import { join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
   // init Application
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const port = process.env.PORT ?? 3000;
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
@@ -24,7 +27,10 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
 
+  app.useStaticAssets(join(__dirname, '..', 'public'), { prefix: "/public/" })
+
   await app.listen(port, () => {
+
     console.log(`server listening on http://localhost:${port}`);
     console.log(`OPENAPI on http://localhost:${port}/api`);
   });

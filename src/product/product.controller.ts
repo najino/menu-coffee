@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpStatus, Param, ParseFilePipeBuilder, ParseIntPipe, Patch, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { IsAuth } from '../decorator/auth.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('product')
 export class ProductController {
@@ -9,9 +10,13 @@ export class ProductController {
 
 
   @Post()
+  @UseInterceptors(FileInterceptor("file"))
   @IsAuth()
-  createProduct(@Body() createProductDto: CreateProductDto) {
-    return this.productService.createProduct(createProductDto)
+  createProduct(@Body() createProductDto: CreateProductDto, @UploadedFile("file", new ParseFilePipeBuilder().
+    addFileTypeValidator({ fileType: /^image\/(jpeg|png|jpg)$/ }).
+    addMaxSizeValidator({ maxSize: 5 * 1024 * 1024, message: "file must be lower than 5Mb" })
+    .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY })) img: Express.Multer.File) {
+    return this.productService.createProduct(createProductDto, img)
   }
 
   @Get()
