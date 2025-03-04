@@ -3,7 +3,7 @@ export interface Product {
     name: string;
     price: string;
     img: string;
-    model: string[]
+    models: string[]
     description: string
     status: boolean
 }

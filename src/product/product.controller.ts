@@ -4,6 +4,9 @@ import { CreateProductDto } from './dtos/create-product.dto';
 import { IsAuth } from '../decorator/auth.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PaginationDto } from './dtos/get-query.dto';
+import { UpdateProductDto } from './dtos/update-product.dto';
+import { ObjectId } from 'mongodb';
+import { MongoIdDto } from './dtos/mongo-id-param.dto';
 
 @Controller('product')
 export class ProductController {
@@ -28,19 +31,19 @@ export class ProductController {
 
   @Patch(":id")
   @IsAuth()
-  update(@Param("id", ParseIntPipe) id: number) {
-    return this.productService.update(id)
+  update(@Param() { id }: MongoIdDto, @Body() updateProductDto: UpdateProductDto) {
+    return this.productService.update(id, updateProductDto)
   }
 
   @Delete(":id")
   @IsAuth()
-  delete(@Param("id", ParseIntPipe) id: number) {
-    this.productService.remove(id);
+  delete(@Param() { id }: MongoIdDto) {
+    return this.productService.remove(id);
   }
 
-  @Post(":id")
+  @Get(":id/status")
   @IsAuth()
-  productStatus(@Param("id", ParseIntPipe) id: number) {
+  productStatus(@Param() { id }: MongoIdDto) {
     return this.productService.status(id)
   }
 }

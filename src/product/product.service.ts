@@ -1,9 +1,13 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { ProductRepository } from './product.repository';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { extname, join } from 'path';
-import { createWriteStream } from 'fs';
+import { createWriteStream, existsSync, rmSync } from 'fs';
 import Decimal from 'decimal.js';
+import { UpdateProductDto } from './dtos/update-product.dto';
+import { ObjectId } from 'mongodb';
+import { Product } from './entity/product.entity';
+import { rm } from 'fs/promises';
 
 @Injectable()
 export class ProductService {
@@ -32,6 +36,15 @@ export class ProductService {
 
     }
 
+    private removeFile(path: string) {
+        const fullPath = join(process.cwd(), path)
+
+        if (existsSync(fullPath))
+            rmSync(fullPath)
+
+        return;
+    }
+
     async createProduct(createProductDto: CreateProductDto, img: Express.Multer.File) {
         try {
             const { description, models, name, price, status } = createProductDto;
@@ -44,7 +57,7 @@ export class ProductService {
             const { insertedId } = await this.productRepository.create({
                 description,
                 img: imgPath,
-                model: models,
+                models: models,
                 name,
                 price: decimalPrice.valueOf(),
                 status: status === '1' ? true : false
@@ -57,8 +70,6 @@ export class ProductService {
         }
     }
 
-
-
     async findAll(limit?: number, page?: number) {
         limit = limit || 10;
         page = page || 1
@@ -68,11 +79,68 @@ export class ProductService {
     }
 
 
-    update(id: number) { }
+    async update(id: ObjectId, updateProductDto: UpdateProductDto) {
+
+        let payload: Partial<Product> = {};
+
+        for (const prop in updateProductDto) {
+
+            if (updateProductDto[prop] && prop === 'status') {
+                payload[prop] = updateProductDto[prop] === "1" ? true : false
+            }
+
+            if (updateProductDto[prop] && prop === 'price') {
+                // use DecimalJs to prevent Floating Point
+                payload[prop] = new Decimal(updateProductDto[prop]).valueOf();
+            }
+
+            if (updateProductDto[prop]) {
+                payload[prop] = updateProductDto[prop]
+            }
+        }
+
+        try {
+
+            // get Product and Update them
+            const result = await this.productRepository.update({ _id: new ObjectId(id) }, payload);
+
+            if (!result)
+                throw new NotFoundException("Product not found.")
+
+            return result;
+        } catch (err) {
+            if (err instanceof HttpException)
+                throw err;
+
+            this.logger.error(err)
+            throw new InternalServerErrorException()
+
+        }
+
+    }
 
 
-    remove(id: number) { }
+    async remove(id: ObjectId) {
+
+        const product = await this.productRepository.delete({ _id: new ObjectId(id) })
+
+        if (!product)
+            throw new NotFoundException("Proudct not found.")
+
+        this.removeFile(product.img);
+
+        return product;
+
+    }
 
 
-    status(id: number) { }
+    async status(id: ObjectId) {
+
+        const product = await this.productRepository.findOne({ _id: new ObjectId(id) })
+
+        if (!product)
+            throw new NotFoundException("Product not found.")
+
+        return product.status;
+    }
 }

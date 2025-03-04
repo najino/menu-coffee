@@ -25,6 +25,7 @@ export class CreateProductDto {
     description: string
 
 
+    // TODO: Update Status To Boolean
     @IsNotEmpty({ message: "status cannot be empty" })
     @IsString({ message: "status must be string." })
     @IsIn(["1", "0"], { message: "status must be 0 or 1." })

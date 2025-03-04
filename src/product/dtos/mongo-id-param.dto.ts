@@ -1,3 +1,4 @@
+import { Type } from "class-transformer";
 import { IsMongoId, IsNotEmpty } from "class-validator";
 import { ObjectId } from "mongodb";
 
