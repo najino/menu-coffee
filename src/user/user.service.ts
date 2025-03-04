@@ -4,7 +4,6 @@ import { CreateUserDto } from './dtos/create-user.dto';
 import { LoginUserDto } from './dtos/login-user.dto';
 import { compare, genSalt, hash } from 'bcryptjs';
 import { ObjectId, WithId } from 'mongodb';
-import { User } from './entity/user.entity';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -19,7 +18,7 @@ export class UserService {
             const isUserNameUnique = await this.userRepository.findOne({ username });
 
             if (isUserNameUnique)
-                throw new ConflictException("username is exsist before.")
+                throw new ConflictException("username is exist before.")
 
             // hashPassword
             const salt = await genSalt()
@@ -62,7 +61,7 @@ export class UserService {
 
 
         return {
-            msg: "user loggin successfully",
+            msg: "user login successfully",
             accessToken: accessToken
         }
     }

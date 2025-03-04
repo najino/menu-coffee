@@ -11,10 +11,10 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
-  // lestening to Project
+  // listening to Project
   const config = new DocumentBuilder()
-    .setTitle('Cofee')
-    .setDescription('The API for Cofee Landing')
+    .setTitle('Coffee')
+    .setDescription('The API for Coffee Landing')
     .setVersion('1.0')
     .build();
 

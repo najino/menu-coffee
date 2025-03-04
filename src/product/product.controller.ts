@@ -1,11 +1,10 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, ParseFilePipeBuilder, ParseIntPipe, Patch, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpStatus, Param, ParseFilePipeBuilder, Patch, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { IsAuth } from '../decorator/auth.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PaginationDto } from './dtos/get-query.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
-import { ObjectId } from 'mongodb';
 import { MongoIdDto } from './dtos/mongo-id-param.dto';
 
 @Controller('product')

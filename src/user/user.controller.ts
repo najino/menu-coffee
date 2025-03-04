@@ -22,7 +22,7 @@ export class UserController {
     }
   })
   @ApiUnauthorizedResponse({ description: "user can't access to this route" })
-  @ApiConflictResponse({ description: "username is exsist before." })
+  @ApiConflictResponse({ description: "username is exist before." })
   @ApiCookieAuth()
   @ApiBody({ type: CreateUserDto })
   createUser(@Body() createUserDto: CreateUserDto) {

@@ -27,7 +27,7 @@ export class AuthGuard implements CanActivate {
     if (!isAuthMeta)
       return true;
 
-    // TODO: Validate User With Beare Header
+    // TODO: Validate User With Bearer Header
     const token = this.getBearerHeader(req);
 
     try {
@@ -44,7 +44,7 @@ export class AuthGuard implements CanActivate {
       return true;
     } catch (err) {
 
-      throw new UnauthorizedException("Token is invaid. please login again")
+      throw new UnauthorizedException("Token is invalid . please login again")
     }
 
   }
