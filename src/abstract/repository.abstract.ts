@@ -10,10 +10,10 @@ export class Repository<T extends Document> implements IRepo<T> {
     }
 
     async delete(filter: Filter<T>) {
-        return this.model.deleteOne(filter)
+        return this.model.findOneAndDelete(filter)
     }
 
-    async findAll(where: Filter<T>, options?: FindOptions) {
+    async findAll(where?: Filter<T>, options?: FindOptions) {
         return this.model.find(where || {}, options)
     }
 
@@ -22,6 +22,6 @@ export class Repository<T extends Document> implements IRepo<T> {
     }
 
     async update(filter: Filter<T>, paylaod: Partial<T>) {
-        return this.model.updateOne(filter, paylaod)
+        return this.model.findOneAndUpdate(filter, { $set: paylaod }, { returnDocument: "after" })
     }
 }
