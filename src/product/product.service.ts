@@ -22,13 +22,13 @@ export class ProductService {
         const fileName = Math.floor(Math.random() * 1e7 * Date.now())
         const filePath = join(process.cwd(), "public", "product", fileName + ext);
         // create WriteStream
-        const writeStram = createWriteStream(filePath);
+        const writeStream = createWriteStream(filePath);
 
         // write image into Directory
-        writeStram.write(file.buffer, (err) => {
+        writeStream.write(file.buffer, (err) => {
             if (err) {
                 this.logger.error(err)
-                throw new BadRequestException("unknows Error During Upload.")
+                throw new BadRequestException("unknown Error During Upload.")
             }
         })
 
@@ -48,7 +48,7 @@ export class ProductService {
     async createProduct(createProductDto: CreateProductDto, img: Express.Multer.File) {
         try {
             const { description, models, name, price, status } = createProductDto;
-            // uplaod Image
+            // upload Image
             const imgPath = this.uploadFile(img)
 
             // convert price to Decimal 
@@ -125,7 +125,7 @@ export class ProductService {
         const product = await this.productRepository.delete({ _id: new ObjectId(id) })
 
         if (!product)
-            throw new NotFoundException("Proudct not found.")
+            throw new NotFoundException("Product not found.")
 
         this.removeFile(product.img);
 

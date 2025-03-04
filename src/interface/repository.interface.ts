@@ -1,9 +1,9 @@
-import { Document, DeleteResult, Filter, FindCursor, FindOptions, InsertOneResult, OptionalUnlessRequiredId, UpdateResult, WithId } from "mongodb"
+import { Document, Filter, FindCursor, FindOptions, InsertOneResult, OptionalUnlessRequiredId, WithId } from "mongodb"
 
 export interface IRepo<T extends Document> {
     create(payload: OptionalUnlessRequiredId<T>): Promise<InsertOneResult<T>>
 
-    update(filter: Filter<T>, paylaod: Partial<T>): Promise<WithId<T> | null>
+    update(filter: Filter<T>, payload: Partial<T>): Promise<WithId<T> | null>
 
     findOne(filter: Filter<T>): Promise<WithId<T> | null>
 

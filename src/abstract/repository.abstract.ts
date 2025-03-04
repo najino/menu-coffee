@@ -21,7 +21,7 @@ export class Repository<T extends Document> implements IRepo<T> {
         return this.model.findOne(filter)
     }
 
-    async update(filter: Filter<T>, paylaod: Partial<T>) {
-        return this.model.findOneAndUpdate(filter, { $set: paylaod }, { returnDocument: "after" })
+    async update(filter: Filter<T>, payload: Partial<T>) {
+        return this.model.findOneAndUpdate(filter, { $set: payload }, { returnDocument: "after" })
     }
 }
