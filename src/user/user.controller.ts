@@ -17,7 +17,7 @@ export class UserController {
       type: "object",
       properties: {
         msg: { type: "string" },
-        id: { type: "string", description: "userId" }
+        accessToken: { type: "string", description: "AccessToken" }
       }
     }
   })
