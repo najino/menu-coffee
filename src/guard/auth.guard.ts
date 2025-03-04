@@ -21,15 +21,8 @@ export class AuthGuard implements CanActivate {
       ctx.getHandler(),
     ]);
 
-    if (!isAuthMeta || req.session.user) return true;
-
+    // TODO: Validate User With Beare Header
+    return true;
     throw new UnauthorizedException("this route is acceesible for admin.")
-  }
-}
-
-
-declare module 'express-session' {
-  interface SessionData {
-    user: { id: ObjectId, username: string };
   }
 }

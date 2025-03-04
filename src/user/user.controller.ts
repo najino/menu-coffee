@@ -41,13 +41,6 @@ export class UserController {
   })
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginUserDto, @Req() req: Request) {
-    const user = await this.userService.login(loginDto)
-
-    req.session.user = {
-      id: user._id,
-      username: user.username
-    }
-
-    return { msg: "user login successfully" }
+    return this.userService.login(loginDto)
   }
 }

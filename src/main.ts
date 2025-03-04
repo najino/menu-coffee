@@ -1,10 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-const session = require('express-session');
 import { ValidationPipe } from '@nestjs/common';
-import { CreateSession } from './config/session.config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as express from 'express'
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
@@ -14,10 +11,7 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
-  // setup session config
-  CreateSession(app)
   // lestening to Project
-
   const config = new DocumentBuilder()
     .setTitle('Cofee')
     .setDescription('The API for Cofee Landing')
