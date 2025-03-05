@@ -1,0 +1,34 @@
+import { ApiProperty } from "@nestjs/swagger";
+import { ArrayMinSize, IsArray, IsIn, IsNotEmpty, IsNumberString, IsOptional, IsString } from "class-validator";
+
+export class CreateProductDto {
+    @IsNotEmpty({ message: "name is required." })
+    @IsString({ message: "name must be string." })
+    @ApiProperty()
+    name: string
+
+    @IsNumberString()
+    @IsNotEmpty({ message: "price cannot be empty." })
+    @ApiProperty()
+    price: string
+
+    @IsOptional()
+    @IsArray({ message: "please enter array of string in models." })
+    @IsString({ each: true, message: "models must be array of string." })
+    @ArrayMinSize(1, { message: "models cannot be less than 1 item" })
+    @ApiProperty()
+    models: string[]
+
+    @IsNotEmpty({ message: "description cannot be empty." })
+    @IsString({ message: "typeof description must be string" })
+    @ApiProperty()
+    description: string
+
+
+    // TODO: Update Status To Boolean
+    @IsNotEmpty({ message: "status cannot be empty" })
+    @IsString({ message: "status must be string." })
+    @IsIn(["1", "0"], { message: "status must be 0 or 1." })
+    @ApiProperty({ description: "a product is exsist or not." })
+    status: string
+}

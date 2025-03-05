@@ -112,3 +112,13 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 - [ ] Postman Collection
 - [ ] Unit Test 
 - [ ] E2E Test 
+
+
+## Packages
+### MongoDb (https://www.mongodb.com/docs/drivers/node/current/)
+### DecimalJs(To Preven Floating Point (IEEE 754))(https://www.npmjs.com/package/decimal.js)
+### Multer For Working With file
+### Swagger For Documentation
+### Jest For testing
+### express-session for SessionBased Authorization
+### nestjs as a main Framwork

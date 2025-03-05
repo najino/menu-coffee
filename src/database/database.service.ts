@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnApplicationBootstrap, OnModuleInit } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Db, Document, MongoClient } from "mongodb";
 import { IEnv } from "src/interface/env.interface";
@@ -24,7 +24,7 @@ export class MongoDbService implements OnModuleInit {
 			this.client = await this.client.connect()
 			this.logger.log("connected successfully");
 		} catch (err) {
-			this.logger.error("faild to connect db");
+			this.logger.error("fail to connect db");
 			process.exit(1)
 		}
 

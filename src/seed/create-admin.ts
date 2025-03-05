@@ -16,7 +16,7 @@ async function bootstrap() {
         console.log('Admin created successfully');
         await app.close();
     } catch (err) {
-        console.error("admin exsist.")
+        console.error("admin exist .")
     }
     process.exit(1)
 }

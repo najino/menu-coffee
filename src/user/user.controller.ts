@@ -17,12 +17,12 @@ export class UserController {
       type: "object",
       properties: {
         msg: { type: "string" },
-        id: { type: "string", description: "userId" }
+        accessToken: { type: "string", description: "AccessToken" }
       }
     }
   })
   @ApiUnauthorizedResponse({ description: "user can't access to this route" })
-  @ApiConflictResponse({ description: "username is exsist before." })
+  @ApiConflictResponse({ description: "username is exist before." })
   @ApiCookieAuth()
   @ApiBody({ type: CreateUserDto })
   createUser(@Body() createUserDto: CreateUserDto) {
@@ -41,13 +41,6 @@ export class UserController {
   })
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginUserDto, @Req() req: Request) {
-    const user = await this.userService.login(loginDto)
-
-    req.session.user = {
-      id: user._id,
-      username: user.username
-    }
-
-    return { msg: "user login successfully" }
+    return this.userService.login(loginDto)
   }
 }
