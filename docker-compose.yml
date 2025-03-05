@@ -1,0 +1,52 @@
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile 
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - ${PORT}:3000
+    depends_on:
+      - mongo_db
+    volumes:
+      - public-data:/app/public
+      - .:/app
+    networks:
+      - app
+  
+  mongo_db:
+    image: mongo 
+    restart: always
+    networks:
+      - app
+    ports:
+      - ${DB_PORT}:27017
+    environment:
+       - MONGO_INITDB_DATABASE=coffee
+    volumes:
+      - data:/data/db
+  
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: no
+    env_file:
+      - .env
+    networks:
+      - app
+    depends_on:
+      - mongo_db
+    command: ["pnpm","run","seed"]
+    
+
+
+volumes:
+  public-data:
+  data:
+
+networks:
+  app:
+      
