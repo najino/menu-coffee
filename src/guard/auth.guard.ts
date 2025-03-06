@@ -1,19 +1,22 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { ObjectId } from 'mongodb';
 import { AuthToken } from 'src/decorator/auth.decorator';
+import { AccessTokenPayload } from '../interface/accessToken.interface';
+import { ObjectId } from 'mongodb';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) { }
+  constructor(private readonly reflector: Reflector, private jwtService: JwtService) { }
 
-  canActivate(ctx: ExecutionContext) {
+  async canActivate(ctx: ExecutionContext) {
     const req = ctx.switchToHttp().getRequest<Request>();
 
     const isAuthMeta = this.reflector.getAllAndOverride(AuthToken, [
@@ -21,15 +24,49 @@ export class AuthGuard implements CanActivate {
       ctx.getHandler(),
     ]);
 
-    if (!isAuthMeta || req.session.user) return true;
+    if (!isAuthMeta)
+      return true;
 
-    throw new UnauthorizedException("this route is acceesible for admin.")
+    // TODO: Validate User With Bearer Header
+    const token = this.getBearerHeader(req);
+
+    try {
+
+      const payload = await this.jwtService.verifyAsync<AccessTokenPayload>(token, {
+        secret: process.env.ACCESS_TOKEN_SECRET
+      })
+
+      req.user = {
+        id: payload.id,
+        username: payload.username
+      }
+
+      return true;
+    } catch (err) {
+
+      throw new UnauthorizedException("Token is invalid . please login again")
+    }
+
+  }
+
+
+  private getBearerHeader(req: Request) {
+    const [_, token] = req.headers.authorization?.split(' ') || []
+    if (!token)
+      throw new ForbiddenException("Header must be a Bearer")
+
+    return token;
   }
 }
 
 
-declare module 'express-session' {
-  interface SessionData {
-    user: { id: ObjectId, username: string };
+declare global {
+  namespace Express {
+    interface Request {
+      user: {
+        id: ObjectId,
+        username: string
+      }
+    }
   }
 }
