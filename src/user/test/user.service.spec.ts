@@ -4,6 +4,7 @@ import { UserRepository } from "../user.repository"
 import { ObjectId } from "mongodb"
 import { ConflictException, NotFoundException } from "@nestjs/common"
 import * as bcrypt from 'bcryptjs'
+import { JwtModule, JwtService } from "@nestjs/jwt"
 
 
 describe("User Service Testing", () => {
@@ -16,6 +17,10 @@ describe("User Service Testing", () => {
         update: jest.fn()
     }
 
+    let jwtMock: Partial<JwtService> = {
+        signAsync: jest.fn()
+    }
+
     let service: UserService;
 
     beforeEach(async () => {
@@ -25,6 +30,10 @@ describe("User Service Testing", () => {
                 {
                     provide: UserRepository,
                     useValue: userRepositoryMock
+                },
+                {
+                    provide: JwtService,
+                    useValue: jwtMock
                 }
             ]
         }).compile();
@@ -40,17 +49,17 @@ describe("User Service Testing", () => {
 
 
     describe("Register User", () => {
-        it("should be thorw an Error because username is exsist before.", () => {
+        it("should be throw an Error because username is exist before.", () => {
             jest.spyOn(userRepositoryMock, 'findOne').mockResolvedValueOnce({ _id: "id" as unknown as ObjectId, username: "test", password: "testPass" })
 
 
             const promise = service.createUser({ username: "test", 'password': "12341234" })
 
             expect(promise).rejects.toThrow(ConflictException)
-            expect(promise).rejects.toThrow("username is exsist before.")
+            expect(promise).rejects.toThrow("username is exist before.")
         })
 
-        it("shoulds be registered user", async () => {
+        it("should be registered user", async () => {
             jest.spyOn(userRepositoryMock, 'findOne').mockResolvedValueOnce(null)
             jest.spyOn(userRepositoryMock, 'create').mockResolvedValueOnce({ acknowledged: true, insertedId: "id" as unknown as ObjectId })
             jest.spyOn(bcrypt, 'hash').mockResolvedValueOnce("hash-pass" as never)
@@ -72,13 +81,13 @@ describe("User Service Testing", () => {
         it("should be throw An Error If User Does not found", () => {
             jest.spyOn(userRepositoryMock, 'findOne').mockResolvedValueOnce(null)
 
-            const promise = service.login({ username: "usernaem", password: "pass" })
+            const promise = service.login({ username: "username", password: "pass" })
             expect(promise).rejects.toThrow(NotFoundException)
             expect(promise).rejects.toThrow("invalid credential.")
         })
 
 
-        it("should be thorw an Error If Credentials are invalid", () => {
+        it("should be throw an Error If Credentials are invalid", () => {
             let user = {
                 _id: "user-id" as unknown as ObjectId,
                 username: "username",
@@ -88,7 +97,7 @@ describe("User Service Testing", () => {
 
             jest.spyOn(bcrypt, 'compare').mockResolvedValueOnce(false as never)
 
-            const promise = service.login({ username: "usernaem", password: "pass" })
+            const promise = service.login({ username: "username", password: "pass" })
             expect(promise).rejects.toThrow(NotFoundException)
             expect(promise).rejects.toThrow("invalid credential.")
         })
@@ -103,10 +112,12 @@ describe("User Service Testing", () => {
             jest.spyOn(userRepositoryMock, 'findOne').mockResolvedValueOnce(user)
 
             jest.spyOn(bcrypt, 'compare').mockResolvedValueOnce(true as never)
+            jest.spyOn(jwtMock, 'signAsync').mockResolvedValueOnce("accessToken")
 
-            const promise = service.login({ username: "usernaem", password: "pass" })
+            const promise = service.login({ username: "username", password: "pass" })
 
-            expect(promise).resolves.toEqual(user)
+            expect(promise).resolves.toHaveProperty('msg')
+            expect(promise).resolves.toHaveProperty('accessToken')
         })
     })
 })
