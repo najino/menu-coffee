@@ -2,12 +2,11 @@ import { BadRequestException, HttpException, Injectable, InternalServerErrorExce
 import { ProductRepository } from './product.repository';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { extname, join } from 'path';
-import { createWriteStream, existsSync, rmSync } from 'fs';
+import { createWriteStream, existsSync, rmSync, write } from 'fs';
 import Decimal from 'decimal.js';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { ObjectId } from 'mongodb';
 import { Product } from './entity/product.entity';
-import { rm } from 'fs/promises';
 
 @Injectable()
 export class ProductService {
@@ -16,23 +15,32 @@ export class ProductService {
 
     private logger = new Logger(ProductService.name);
 
-    private uploadFile(file: Express.Multer.File) {
+    // generate FileName
+    private genFileName(file: Express.Multer.File) {
         // create FileName
         const ext = extname(file.originalname);
         const fileName = Math.floor(Math.random() * 1e7 * Date.now())
-        const filePath = join(process.cwd(), "public", "product", fileName + ext);
+        const fullPath = join(process.cwd(), "public", "product", fileName + ext);
+
+        return { fullPath, urlPath: `/public/product/${fileName}${ext}` }
+    }
+
+    private uploadFile(file: Express.Multer.File) {
+        // create FileName
+        const { fullPath, urlPath } = this.genFileName(file)
         // create WriteStream
-        const writeStream = createWriteStream(filePath);
+        const writeStream = createWriteStream(fullPath);
+
 
         // write image into Directory
         writeStream.write(file.buffer, (err) => {
             if (err) {
                 this.logger.error(err)
-                throw new BadRequestException("unknown Error During Upload.")
+                throw new BadRequestException("Error During Upload.")
             }
         })
 
-        return `/public/product/${fileName}${ext}`
+        return urlPath
 
     }
 
@@ -45,27 +53,33 @@ export class ProductService {
         return;
     }
 
+
     async createProduct(createProductDto: CreateProductDto, img: Express.Multer.File) {
         try {
             const { description, models, name, price, status } = createProductDto;
-            // upload Image
-            const imgPath = this.uploadFile(img)
-
             // convert price to Decimal 
             const decimalPrice = new Decimal(price).valueOf();
+            // getFileURlPath
+            const { urlPath } = this.genFileName(img)
 
             const { insertedId } = await this.productRepository.create({
                 description,
-                img: imgPath,
+                img: urlPath,
                 models: models,
                 name,
                 price: decimalPrice.valueOf(),
                 status: status === '1' ? true : false
             })
 
-            return await this.productRepository.findOne({ _id: insertedId })
+            // Store Image Into Storage If Product Saved Successful
+            this.uploadFile(img)
+
+            return this.productRepository.findOne({ _id: insertedId })
         } catch (err) {
-            this.logger.error(err)
+            if (err instanceof HttpException)
+                throw err
+
+            this.logger.error(err.message)
             throw new InternalServerErrorException(err)
         }
     }
