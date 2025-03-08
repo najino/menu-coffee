@@ -14,7 +14,7 @@ export class Repository<T extends Document> implements IRepo<T> {
     }
 
     async findAll(where?: Filter<T>, options?: FindOptions) {
-        return this.model.find(where || {}, options)
+        return this.model.find(where || {}, options).toArray()
     }
 
     async findOne(filter: Filter<T>) {

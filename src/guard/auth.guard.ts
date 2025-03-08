@@ -8,9 +8,9 @@ import {
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { AuthToken } from 'src/decorator/auth.decorator';
 import { AccessTokenPayload } from '../interface/accessToken.interface';
 import { ObjectId } from 'mongodb';
+import { AuthToken } from '../decorator/auth.decorator';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -22,7 +22,7 @@ export class AuthGuard implements CanActivate {
     const isAuthMeta = this.reflector.getAllAndOverride(AuthToken, [
       ctx.getClass(),
       ctx.getHandler(),
-    ]);
+    ]) || null;
 
     if (!isAuthMeta)
       return true;
@@ -43,8 +43,7 @@ export class AuthGuard implements CanActivate {
 
       return true;
     } catch (err) {
-
-      throw new UnauthorizedException("Token is invalid . please login again")
+      throw new UnauthorizedException("Token is invalid. please login again")
     }
 
   }
@@ -52,8 +51,10 @@ export class AuthGuard implements CanActivate {
 
   private getBearerHeader(req: Request) {
     const [_, token] = req.headers.authorization?.split(' ') || []
-    if (!token)
-      throw new ForbiddenException("Header must be a Bearer")
+
+    if (!token) {
+      throw new ForbiddenException("Header is empty or doest not contain 'Bearer'")
+    }
 
     return token;
   }
