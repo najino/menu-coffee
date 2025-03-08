@@ -143,7 +143,6 @@ export class ProductService {
         this.removeFile(product.img);
 
         return product;
-
     }
 
 

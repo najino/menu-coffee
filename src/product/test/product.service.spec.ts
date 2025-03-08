@@ -4,6 +4,7 @@ import { ProductRepository } from '../product.repository';
 import { FindCursor, InsertOneResult, NonObjectIdLikeDocument, ObjectId, OptionalId, WithId } from 'mongodb';
 import * as fs from 'fs';
 import Decimal from 'decimal.js';
+import * as path from 'path'
 import {
   BadRequestException,
   InternalServerErrorException,
@@ -228,6 +229,34 @@ describe('Product Service', () => {
     })
   })
 
+
+  describe("Remove Product", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    })
+
+
+    it("Should be throw NotFoundException", () => {
+      productRepoMock.delete.mockResolvedValueOnce(null);
+      const objId = ObjectIdGenerator() as unknown as ObjectId;
+      const promise = service.remove(objId);
+      expect(promise).rejects.toThrow(NotFoundException)
+      expect(promise).rejects.toThrow("Product not found.")
+    })
+
+
+    it("Should be removed successful", async () => {
+      const objId = ObjectIdGenerator() as unknown as ObjectId;
+      productRepoMock.delete.mockResolvedValueOnce({ _id: objId, img: "/public/product/test.jpg" });
+      jest.spyOn(fs, 'existsSync').mockReturnValueOnce(true)
+      jest.spyOn(fs, 'rmSync').mockReturnValueOnce();
+
+      const res = await service.remove(objId);
+      expect(res).toEqual({ _id: objId, img: "/public/product/test.jpg" })
+      expect(fs.existsSync).toHaveBeenCalledWith(`${process.cwd()}${res.img}`)
+      expect(fs.rmSync).toHaveBeenCalled()
+    })
+  })
 
 });
 
