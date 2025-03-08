@@ -4,11 +4,13 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import logger from './logger/logger';
 
 async function bootstrap() {
   // init Application
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger });
   const port = process.env.PORT ?? 3000;
+
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
   // listening to Project
@@ -24,7 +26,6 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public'), { prefix: "/public/" })
 
   await app.listen(port, () => {
-
     console.log(`server listening on http://localhost:${port}`);
     console.log(`OPENAPI on http://localhost:${port}/api`);
   });
