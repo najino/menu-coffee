@@ -104,13 +104,11 @@ export class ProductService {
             if (updateProductDto[prop] && prop === 'status') {
                 payload[prop] = updateProductDto[prop] === "1" ? true : false
             }
-
-            if (updateProductDto[prop] && prop === 'price') {
+            else if (updateProductDto[prop] && prop === 'price') {
                 // use DecimalJs to prevent Floating Point
                 payload[prop] = new Decimal(updateProductDto[prop]).valueOf();
             }
-
-            if (updateProductDto[prop]) {
+            else if (updateProductDto[prop]) {
                 payload[prop] = updateProductDto[prop]
             }
         }
@@ -128,9 +126,8 @@ export class ProductService {
             if (err instanceof HttpException)
                 throw err;
 
-            this.logger.error(err)
+            this.logger.error(err.message)
             throw new InternalServerErrorException()
-
         }
 
     }

@@ -7,6 +7,7 @@ import Decimal from 'decimal.js';
 import {
   BadRequestException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { Product } from '../entity/product.entity';
 
@@ -193,4 +194,42 @@ describe('Product Service', () => {
       expect(productRepoMock.findAll).toHaveBeenCalledWith({}, { limit: 5, skip: skip })
     })
   });
+
+
+  describe("Update", () => {
+
+    beforeEach(() => {
+      jest.resetAllMocks();
+    })
+
+    it("Should be throw NotFoundException Because Product Not Found", () => {
+      jest.spyOn(productRepoMock, 'update')
+        .mockResolvedValueOnce(null);
+
+      const objId = ObjectIdGenerator() as unknown as ObjectId
+
+      const promise = service.update(objId, {})
+      expect(promise).rejects.toThrow(NotFoundException)
+      expect(promise).rejects.toThrow("Product not found.")
+    })
+
+
+    it('should be updated', async () => {
+      jest.spyOn(productRepoMock, 'update')
+        .mockImplementationOnce((id: any, payload: any) => Promise.resolve(payload));
+
+      const objId = ObjectIdGenerator() as unknown as ObjectId
+
+      const res = await service.update(objId, { status: "1", price: "120000" })
+
+      expect(res).toEqual({ status: true, price: "120000" })
+
+      expect(productRepoMock.update).toHaveBeenCalledTimes(1)
+    })
+  })
+
+
 });
+
+const ObjectIdGenerator = (m = Math, d = Date, h = 16, s = s => m.floor(s).toString(h)) =>
+  s(d.now() / 1000) + ' '.repeat(h).replace(/./g, () => s(m.random() * h))
