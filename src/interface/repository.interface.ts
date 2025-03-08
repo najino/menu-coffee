@@ -7,7 +7,7 @@ export interface IRepo<T extends Document> {
 
     findOne(filter: Filter<T>): Promise<WithId<T> | null>
 
-    findAll(where: Filter<T>, options?: FindOptions): Promise<FindCursor<WithId<T>>>
+    findAll(where: Filter<T>, options?: FindOptions): Promise<WithId<T>[]>
 
     delete(filter: Filter<T>): Promise<WithId<T> | null>
 

@@ -89,7 +89,9 @@ export class ProductService {
         page = page || 1
         const skip = (page - 1) * limit;
 
-        return ((await this.productRepository.findAll()).limit(limit).skip(skip)).toArray();
+        const result = await this.productRepository.findAll({}, { limit, skip });
+
+        return result
     }
 
 

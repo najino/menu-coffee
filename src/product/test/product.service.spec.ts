@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { ProductService } from '../product.service';
 import { ProductRepository } from '../product.repository';
-import { InsertOneResult, NonObjectIdLikeDocument, ObjectId, OptionalId } from 'mongodb';
+import { FindCursor, InsertOneResult, NonObjectIdLikeDocument, ObjectId, OptionalId, WithId } from 'mongodb';
 import * as fs from 'fs';
 import Decimal from 'decimal.js';
 import {
@@ -148,7 +148,7 @@ describe('Product Service', () => {
   });
 
   describe('findAll', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       productRepoMock.create
         .mockImplementation((payload: OptionalId<Product>) => {
           products.push(payload)
@@ -158,7 +158,7 @@ describe('Product Service', () => {
           } as InsertOneResult<Product>)
         });
 
-      productRepoMock.findAll.mockImplementation(() => products)
+      productRepoMock.findAll.mockImplementation((where: any, options: any) => products as unknown as FindCursor<WithId<Product>>)
 
       for (let i = 0; i < 10; i++) {
         const productFake: Product = {
@@ -173,9 +173,24 @@ describe('Product Service', () => {
       }
     });
 
-    it("happy", () => {
-      expect(products.length).toEqual(10)
+    it("FindAll", async () => {
+      const result = await service.findAll();
+      expect(result.length).toEqual(10)
+      expect(productRepoMock.findAll).toHaveBeenCalledWith({}, { limit: 10, skip: 0 })
     })
 
+
+    it("FindAll With Limit 5", async () => {
+      const result = await service.findAll(5);
+      expect(result.length).toEqual(10)
+      expect(productRepoMock.findAll).toHaveBeenCalledWith({}, { limit: 5, skip: 0 })
+    })
+
+    it("FindAll With Limit 5 and page 2", async () => {
+      const result = await service.findAll(5, 2);
+      const skip = (2 - 1) * 5;
+      expect(result.length).toEqual(10)
+      expect(productRepoMock.findAll).toHaveBeenCalledWith({}, { limit: 5, skip: skip })
+    })
   });
 });
