@@ -1,9 +1,9 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Session } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { LoginUserDto } from './dtos/login-user.dto';
 import { IsAuth } from '../decorator/auth.decorator';
-import { ApiBody, ApiConflictResponse, ApiCookieAuth, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConflictResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Request } from 'express';
 
 @Controller('user')
@@ -12,6 +12,7 @@ export class UserController {
 
   @Post()
   @IsAuth()
+  @ApiBearerAuth("JWT-AUTH")
   @ApiCreatedResponse({
     description: "user Created successfully", schema: {
       type: "object",
@@ -23,7 +24,6 @@ export class UserController {
   })
   @ApiUnauthorizedResponse({ description: "user can't access to this route" })
   @ApiConflictResponse({ description: "username is exist before." })
-  @ApiCookieAuth()
   @ApiBody({ type: CreateUserDto })
   createUser(@Body() createUserDto: CreateUserDto) {
     return this.userService.createUser(createUserDto)
