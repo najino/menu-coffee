@@ -34,7 +34,7 @@ export class ProductService {
         // write image into Directory
         writeStream.write(file.buffer, (err) => {
             if (err) {
-                this.logger.error(err)
+                this.logger.error(err.message)
                 throw new BadRequestException("Error During Upload.")
             }
         })
@@ -54,7 +54,6 @@ export class ProductService {
 
     async createProduct(createProductDto: CreateProductDto, img: Express.Multer.File) {
         try {
-            console.log("i am here")
             const { description, models, name, price, status } = createProductDto;
             // convert price to Decimal 
             const decimalPrice = new Decimal(price).valueOf();
@@ -91,7 +90,9 @@ export class ProductService {
     }
 
 
-    async update(id: ObjectId, updateProductDto: UpdateProductDto) {
+    async update(id: ObjectId, updateProductDto: UpdateProductDto, img?: Express.Multer.File) {
+
+
 
         let payload: Partial<Product> = {};
 
@@ -111,12 +112,20 @@ export class ProductService {
         }
 
         try {
+            const product = await this.productRepository.findOne({ _id: new ObjectId(id) });
+
+            if (!product)
+                throw new NotFoundException("Product not found.")
+
+            if (img) {
+                this.removeFile(product.img);
+
+                const path = this.uploadFile(img);
+                payload['img'] = path;
+            }
 
             // get Product and Update them
             const result = await this.productRepository.update({ _id: new ObjectId(id) }, payload);
-
-            if (!result)
-                throw new NotFoundException("Product not found.")
 
             return result;
         } catch (err) {
@@ -150,6 +159,8 @@ export class ProductService {
         if (!product)
             throw new NotFoundException("Product not found.")
 
-        return product.status;
+        return {
+            status: product.status
+        }
     }
 }
