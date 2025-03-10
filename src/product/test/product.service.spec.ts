@@ -1,10 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { ProductService } from '../product.service';
 import { ProductRepository } from '../product.repository';
-import { FindCursor, InsertOneResult, NonObjectIdLikeDocument, ObjectId, OptionalId, WithId } from 'mongodb';
+import { FindCursor, InsertOneResult, ObjectId, OptionalId, WithId } from 'mongodb';
 import * as fs from 'fs';
 import Decimal from 'decimal.js';
-import * as path from 'path'
 import {
   BadRequestException,
   InternalServerErrorException,

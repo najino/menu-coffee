@@ -2,7 +2,7 @@ import { BadRequestException, HttpException, Injectable, InternalServerErrorExce
 import { ProductRepository } from './product.repository';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { extname, join } from 'path';
-import { createWriteStream, existsSync, rmSync, write } from 'fs';
+import { createWriteStream, existsSync, rmSync } from 'fs';
 import Decimal from 'decimal.js';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { ObjectId } from 'mongodb';
@@ -31,7 +31,6 @@ export class ProductService {
         // create WriteStream
         const writeStream = createWriteStream(fullPath);
 
-
         // write image into Directory
         writeStream.write(file.buffer, (err) => {
             if (err) {
@@ -41,7 +40,6 @@ export class ProductService {
         })
 
         return urlPath
-
     }
 
     private removeFile(path: string) {
@@ -56,15 +54,14 @@ export class ProductService {
 
     async createProduct(createProductDto: CreateProductDto, img: Express.Multer.File) {
         try {
+            console.log("i am here")
             const { description, models, name, price, status } = createProductDto;
             // convert price to Decimal 
             const decimalPrice = new Decimal(price).valueOf();
-            // getFileURlPath
-            const { urlPath } = this.genFileName(img)
 
             const { insertedId } = await this.productRepository.create({
                 description,
-                img: urlPath,
+                img: this.uploadFile(img),
                 models: models,
                 name,
                 price: decimalPrice.valueOf(),
@@ -72,7 +69,6 @@ export class ProductService {
             })
 
             // Store Image Into Storage If Product Saved Successful
-            this.uploadFile(img)
 
             return this.productRepository.findOne({ _id: insertedId })
         } catch (err) {
@@ -104,6 +100,7 @@ export class ProductService {
             if (updateProductDto[prop] && prop === 'status') {
                 payload[prop] = updateProductDto[prop] === "1" ? true : false
             }
+
             else if (updateProductDto[prop] && prop === 'price') {
                 // use DecimalJs to prevent Floating Point
                 payload[prop] = new Decimal(updateProductDto[prop]).valueOf();
