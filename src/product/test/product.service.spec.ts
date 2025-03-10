@@ -48,7 +48,7 @@ describe('Product Service', () => {
         .spyOn(productRepoMock, 'create')
         .mockResolvedValueOnce({ insertedId: objId, acknowledged: true });
 
-      jest.spyOn(fs, 'createWriteStream').mockReturnValueOnce({
+      jest.spyOn(fs, 'createWriteStream').mockReturnValue({
         write: () => {
           return true;
         },
@@ -94,9 +94,7 @@ describe('Product Service', () => {
     });
 
     it('should throw InternalServerErrorException if repository fails', async () => {
-      productRepoMock.create = jest
-        .fn()
-        .mockRejectedValue(new Error('DB error'));
+      productRepoMock.create.mockRejectedValue(new Error('DB error'));
 
       const createProductDto = {
         name: 'Test Product',
@@ -111,7 +109,7 @@ describe('Product Service', () => {
         buffer: Buffer.from('test'),
       } as Express.Multer.File;
 
-      await expect(
+      expect(
         service.createProduct(createProductDto, mockFile),
       ).rejects.toThrow(InternalServerErrorException);
     });
@@ -161,7 +159,9 @@ describe('Product Service', () => {
 
       productRepoMock.findAll.mockImplementation((where: any, options: any) => products as unknown as FindCursor<WithId<Product>>)
 
-      for (let i = 0; i < 10; i++) {
+      products = [];
+
+      for (let i = 0; i <= 10; i++) {
         const productFake: Product = {
           description: `Test Description ${i}`,
           img: `imageFake${i}`,
@@ -204,7 +204,9 @@ describe('Product Service', () => {
 
     it("Should be throw NotFoundException Because Product Not Found", () => {
       jest.spyOn(productRepoMock, 'update')
-        .mockResolvedValueOnce(null);
+        .mockImplementationOnce((_: any, payload: any) => payload)
+
+      jest.spyOn(productRepoMock, 'findOne').mockResolvedValueOnce(null)
 
       const objId = ObjectIdGenerator() as unknown as ObjectId
 
@@ -214,9 +216,12 @@ describe('Product Service', () => {
     })
 
 
-    it('should be updated', async () => {
+    it('should be updated with body', async () => {
       jest.spyOn(productRepoMock, 'update')
         .mockImplementationOnce((id: any, payload: any) => Promise.resolve(payload));
+
+
+      jest.spyOn(productRepoMock, 'findOne').mockResolvedValue({})
 
       const objId = ObjectIdGenerator() as unknown as ObjectId
 
@@ -225,6 +230,41 @@ describe('Product Service', () => {
       expect(res).toEqual({ status: true, price: "120000" })
 
       expect(productRepoMock.update).toHaveBeenCalledTimes(1)
+    })
+
+
+    it("should be updated with image", async () => {
+      jest.spyOn(fs, 'createWriteStream').mockReturnValue({
+        write: () => {
+          return true;
+        },
+      } as unknown as fs.WriteStream);
+
+      jest.spyOn(fs, 'existsSync').mockReturnValue(true)
+      jest.spyOn(fs, 'rmSync').mockReturnValue();
+
+      const mockProduct = {
+        img: 'path',
+      }
+
+      jest.spyOn(productRepoMock, 'findOne').mockResolvedValueOnce(mockProduct);
+
+      jest.spyOn(productRepoMock, 'update').mockResolvedValueOnce(mockProduct);
+
+      const mockFile = {
+        originalname: 'test.jpg',
+        buffer: Buffer.from('test'),
+      } as Express.Multer.File;
+
+      const objId = ObjectIdGenerator() as unknown as ObjectId
+
+      const res = await service.update(objId, {}, mockFile)
+
+      expect(res).toHaveProperty("img")
+
+      expect(fs.existsSync).toHaveBeenCalled()
+      expect(fs.rmSync).toHaveBeenCalled()
+      expect(fs.createWriteStream).toHaveBeenCalled()
     })
   })
 
