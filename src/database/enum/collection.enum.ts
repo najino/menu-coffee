@@ -1,4 +1,4 @@
 export enum CollectionName {
-	user = "users",
-	product = "products",
+  user = 'users',
+  product = 'products',
 }

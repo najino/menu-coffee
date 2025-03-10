@@ -1,7 +1,13 @@
 import { Test } from '@nestjs/testing';
 import { ProductService } from '../product.service';
 import { ProductRepository } from '../product.repository';
-import { FindCursor, InsertOneResult, ObjectId, OptionalId, WithId } from 'mongodb';
+import {
+  FindCursor,
+  InsertOneResult,
+  ObjectId,
+  OptionalId,
+  WithId,
+} from 'mongodb';
 import * as fs from 'fs';
 import Decimal from 'decimal.js';
 import {
@@ -109,9 +115,9 @@ describe('Product Service', () => {
         buffer: Buffer.from('test'),
       } as Express.Multer.File;
 
-      expect(
-        service.createProduct(createProductDto, mockFile),
-      ).rejects.toThrow(InternalServerErrorException);
+      expect(service.createProduct(createProductDto, mockFile)).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
 
     it('Should throw BadRequest if has Error During UploadFile', () => {
@@ -148,16 +154,20 @@ describe('Product Service', () => {
 
   describe('findAll', () => {
     beforeAll(async () => {
-      productRepoMock.create
-        .mockImplementation((payload: OptionalId<Product>) => {
-          products.push(payload)
+      productRepoMock.create.mockImplementation(
+        (payload: OptionalId<Product>) => {
+          products.push(payload);
           return Promise.resolve({
             acknowledged: true,
-            insertedId: "id" as unknown as ObjectId
-          } as InsertOneResult<Product>)
-        });
+            insertedId: 'id' as unknown as ObjectId,
+          } as InsertOneResult<Product>);
+        },
+      );
 
-      productRepoMock.findAll.mockImplementation((where: any, options: any) => products as unknown as FindCursor<WithId<Product>>)
+      productRepoMock.findAll.mockImplementation(
+        (where: any, options: any) =>
+          products as unknown as FindCursor<WithId<Product>>,
+      );
 
       products = [];
 
@@ -167,85 +177,92 @@ describe('Product Service', () => {
           img: `imageFake${i}`,
           models: [],
           name: `fake name${i}`,
-          price: "12000",
-          status: true
-        }
-        await productRepoMock.create(productFake)
+          price: '12000',
+          status: true,
+        };
+        await productRepoMock.create(productFake);
       }
     });
 
-    it("FindAll", async () => {
+    it('FindAll', async () => {
       const result = await service.findAll();
-      expect(result.length).toEqual(10)
-      expect(productRepoMock.findAll).toHaveBeenCalledWith({}, { limit: 10, skip: 0 })
-    })
+      expect(result.length).toEqual(10);
+      expect(productRepoMock.findAll).toHaveBeenCalledWith(
+        {},
+        { limit: 10, skip: 0 },
+      );
+    });
 
-
-    it("FindAll With Limit 5", async () => {
+    it('FindAll With Limit 5', async () => {
       const result = await service.findAll(5);
-      expect(result.length).toEqual(10)
-      expect(productRepoMock.findAll).toHaveBeenCalledWith({}, { limit: 5, skip: 0 })
-    })
+      expect(result.length).toEqual(10);
+      expect(productRepoMock.findAll).toHaveBeenCalledWith(
+        {},
+        { limit: 5, skip: 0 },
+      );
+    });
 
-    it("FindAll With Limit 5 and page 2", async () => {
+    it('FindAll With Limit 5 and page 2', async () => {
       const result = await service.findAll(5, 2);
       const skip = (2 - 1) * 5;
-      expect(result.length).toEqual(10)
-      expect(productRepoMock.findAll).toHaveBeenCalledWith({}, { limit: 5, skip: skip })
-    })
+      expect(result.length).toEqual(10);
+      expect(productRepoMock.findAll).toHaveBeenCalledWith(
+        {},
+        { limit: 5, skip: skip },
+      );
+    });
   });
 
-
-  describe("Update", () => {
-
+  describe('Update', () => {
     beforeEach(() => {
       jest.resetAllMocks();
-    })
+    });
 
-    it("Should be throw NotFoundException Because Product Not Found", () => {
-      jest.spyOn(productRepoMock, 'update')
-        .mockImplementationOnce((_: any, payload: any) => payload)
+    it('Should be throw NotFoundException Because Product Not Found', () => {
+      jest
+        .spyOn(productRepoMock, 'update')
+        .mockImplementationOnce((_: any, payload: any) => payload);
 
-      jest.spyOn(productRepoMock, 'findOne').mockResolvedValueOnce(null)
+      jest.spyOn(productRepoMock, 'findOne').mockResolvedValueOnce(null);
 
-      const objId = ObjectIdGenerator() as unknown as ObjectId
+      const objId = ObjectIdGenerator() as unknown as ObjectId;
 
-      const promise = service.update(objId, {})
-      expect(promise).rejects.toThrow(NotFoundException)
-      expect(promise).rejects.toThrow("Product not found.")
-    })
-
+      const promise = service.update(objId, {});
+      expect(promise).rejects.toThrow(NotFoundException);
+      expect(promise).rejects.toThrow('Product not found.');
+    });
 
     it('should be updated with body', async () => {
-      jest.spyOn(productRepoMock, 'update')
-        .mockImplementationOnce((id: any, payload: any) => Promise.resolve(payload));
+      jest
+        .spyOn(productRepoMock, 'update')
+        .mockImplementationOnce((id: any, payload: any) =>
+          Promise.resolve(payload),
+        );
 
+      jest.spyOn(productRepoMock, 'findOne').mockResolvedValue({});
 
-      jest.spyOn(productRepoMock, 'findOne').mockResolvedValue({})
+      const objId = ObjectIdGenerator() as unknown as ObjectId;
 
-      const objId = ObjectIdGenerator() as unknown as ObjectId
+      const res = await service.update(objId, { status: '1', price: '120000' });
 
-      const res = await service.update(objId, { status: "1", price: "120000" })
+      expect(res).toEqual({ status: true, price: '120000' });
 
-      expect(res).toEqual({ status: true, price: "120000" })
+      expect(productRepoMock.update).toHaveBeenCalledTimes(1);
+    });
 
-      expect(productRepoMock.update).toHaveBeenCalledTimes(1)
-    })
-
-
-    it("should be updated with image", async () => {
+    it('should be updated with image', async () => {
       jest.spyOn(fs, 'createWriteStream').mockReturnValue({
         write: () => {
           return true;
         },
       } as unknown as fs.WriteStream);
 
-      jest.spyOn(fs, 'existsSync').mockReturnValue(true)
+      jest.spyOn(fs, 'existsSync').mockReturnValue(true);
       jest.spyOn(fs, 'rmSync').mockReturnValue();
 
       const mockProduct = {
         img: 'path',
-      }
+      };
 
       jest.spyOn(productRepoMock, 'findOne').mockResolvedValueOnce(mockProduct);
 
@@ -256,48 +273,51 @@ describe('Product Service', () => {
         buffer: Buffer.from('test'),
       } as Express.Multer.File;
 
-      const objId = ObjectIdGenerator() as unknown as ObjectId
+      const objId = ObjectIdGenerator() as unknown as ObjectId;
 
-      const res = await service.update(objId, {}, mockFile)
+      const res = await service.update(objId, {}, mockFile);
 
-      expect(res).toHaveProperty("img")
+      expect(res).toHaveProperty('img');
 
-      expect(fs.existsSync).toHaveBeenCalled()
-      expect(fs.rmSync).toHaveBeenCalled()
-      expect(fs.createWriteStream).toHaveBeenCalled()
-    })
-  })
+      expect(fs.existsSync).toHaveBeenCalled();
+      expect(fs.rmSync).toHaveBeenCalled();
+      expect(fs.createWriteStream).toHaveBeenCalled();
+    });
+  });
 
-
-  describe("Remove Product", () => {
+  describe('Remove Product', () => {
     beforeEach(() => {
       jest.clearAllMocks();
-    })
+    });
 
-
-    it("Should be throw NotFoundException", () => {
+    it('Should be throw NotFoundException', () => {
       productRepoMock.delete.mockResolvedValueOnce(null);
       const objId = ObjectIdGenerator() as unknown as ObjectId;
       const promise = service.remove(objId);
-      expect(promise).rejects.toThrow(NotFoundException)
-      expect(promise).rejects.toThrow("Product not found.")
-    })
+      expect(promise).rejects.toThrow(NotFoundException);
+      expect(promise).rejects.toThrow('Product not found.');
+    });
 
-
-    it("Should be removed successful", async () => {
+    it('Should be removed successful', async () => {
       const objId = ObjectIdGenerator() as unknown as ObjectId;
-      productRepoMock.delete.mockResolvedValueOnce({ _id: objId, img: "/public/product/test.jpg" });
-      jest.spyOn(fs, 'existsSync').mockReturnValueOnce(true)
+      productRepoMock.delete.mockResolvedValueOnce({
+        _id: objId,
+        img: '/public/product/test.jpg',
+      });
+      jest.spyOn(fs, 'existsSync').mockReturnValueOnce(true);
       jest.spyOn(fs, 'rmSync').mockReturnValueOnce();
 
       const res = await service.remove(objId);
-      expect(res).toEqual({ _id: objId, img: "/public/product/test.jpg" })
-      expect(fs.existsSync).toHaveBeenCalledWith(`${process.cwd()}${res.img}`)
-      expect(fs.rmSync).toHaveBeenCalled()
-    })
-  })
-
+      expect(res).toEqual({ _id: objId, img: '/public/product/test.jpg' });
+      expect(fs.existsSync).toHaveBeenCalledWith(`${process.cwd()}${res.img}`);
+      expect(fs.rmSync).toHaveBeenCalled();
+    });
+  });
 });
 
-const ObjectIdGenerator = (m = Math, d = Date, h = 16, s = s => m.floor(s).toString(h)) =>
-  s(d.now() / 1000) + ' '.repeat(h).replace(/./g, () => s(m.random() * h))
+const ObjectIdGenerator = (
+  m = Math,
+  d = Date,
+  h = 16,
+  s = (s) => m.floor(s).toString(h),
+) => s(d.now() / 1000) + ' '.repeat(h).replace(/./g, () => s(m.random() * h));
