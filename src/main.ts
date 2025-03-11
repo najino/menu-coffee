@@ -1,30 +1,35 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import logger from './logger/logger';
+import { swaggerCreator } from './swagger/swagger-creator';
 
 async function bootstrap() {
   // init Application
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger });
-  const port = process.env.PORT ?? 3000;
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger,
+  });
+
+  app.enableCors({
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: ["Content-type", "Authorization"],
+    optionsSuccessStatus: 204
+  });
 
 
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
-  // listening to Project
-  const config = new DocumentBuilder()
-    .setTitle('Coffee')
-    .setDescription('The API for Coffee Landing')
-    .setVersion('1.0')
-    .build();
 
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+
+  const documentFactory = swaggerCreator(app);
   SwaggerModule.setup('api', app, documentFactory);
 
-  app.useStaticAssets(join(__dirname, '..', 'public'), { prefix: "/public/" })
+  app.useStaticAssets(join(__dirname, '..', 'public'), { prefix: '/public/' });
 
+  const port = process.env.PORT ?? 3000;
   await app.listen(port, () => {
     console.log(`server listening on http://localhost:${port}`);
     console.log(`OPENAPI on http://localhost:${port}/api`);
