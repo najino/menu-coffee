@@ -99,26 +99,70 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
 ## TODO
+
 - [x] Basic Setup
 - [x] Create Entity
 - [x] Create Abstract Repository
-- [ ] Product CRUD
-- [ ] Product Status
-- [ ] Fetch Product List 
+- [x] Product CRUD
+- [x] Product Status
+- [x] Fetch Product List
 - [x] singup With UserName And Password
 - [x] Login With UserName And Password
-- [ ] Admin Panel
+- [x] Admin Panel
 - [x] OpenApi Documentation
-- [ ] Postman Collection
-- [ ] Unit Test 
-- [ ] E2E Test 
+- [x] Unit Test
+- [ ] E2E Test
 
+## Packagesc
 
-## Packages
 ### MongoDb (https://www.mongodb.com/docs/drivers/node/current/)
+
 ### DecimalJs(To Preven Floating Point (IEEE 754))(https://www.npmjs.com/package/decimal.js)
+
 ### Multer For Working With file
+
 ### Swagger For Documentation
+
 ### Jest For testing
+
 ### express-session for SessionBased Authorization
+
 ### nestjs as a main Framwork
+
+### pnpm as a Package manager
+
+## using dokcer for run(Recomendatioin)
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/ErfanAbedinpour/menu-coffee.git
+```
+
+2. Set up environment variables and config by your own information:
+
+```bash
+cp .env.example .env
+```
+
+3. Run Database Seeders:
+
+```bash
+docker compose up seed
+```
+
+4. Start
+
+```bash
+docker compose up
+```
+
+### Running Tests
+
+```bash
+# Run tests
+npm test
+
+# Run E2E tests
+npm run test:e2e
+```
