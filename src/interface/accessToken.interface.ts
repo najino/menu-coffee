@@ -1,6 +1,6 @@
-import { ObjectId } from "mongodb";
+import { ObjectId } from 'mongodb';
 
 export interface AccessTokenPayload {
-    id: ObjectId,
-    username: string
+  id: ObjectId;
+  username: string;
 }

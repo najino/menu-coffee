@@ -1,46 +1,65 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Session } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { LoginUserDto } from './dtos/login-user.dto';
 import { IsAuth } from '../decorator/auth.decorator';
-import { ApiBody, ApiConflictResponse, ApiCookieAuth, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { Request } from 'express';
 
-@Controller('user')
+@Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(private readonly userService: UserService) {}
 
   @Post()
   @IsAuth()
+  @ApiTags('Admin')
+  @ApiBearerAuth('JWT-AUTH')
   @ApiCreatedResponse({
-    description: "user Created successfully", schema: {
-      type: "object",
+    description: 'user Created successfully',
+    schema: {
+      type: 'object',
       properties: {
-        msg: { type: "string" },
-        accessToken: { type: "string", description: "AccessToken" }
-      }
-    }
+        msg: { type: 'string' },
+        accessToken: { type: 'string', description: 'AccessToken' },
+      },
+    },
   })
   @ApiUnauthorizedResponse({ description: "user can't access to this route" })
-  @ApiConflictResponse({ description: "username is exist before." })
-  @ApiCookieAuth()
+  @ApiConflictResponse({ description: 'username is exist before.' })
   @ApiBody({ type: CreateUserDto })
   createUser(@Body() createUserDto: CreateUserDto) {
-    return this.userService.createUser(createUserDto)
+    return this.userService.createUser(createUserDto);
   }
 
   @Post('login')
-  @ApiNotFoundResponse({ description: "credential are invalid" })
+  @ApiNotFoundResponse({ description: 'credential are invalid' })
   @ApiOkResponse({
-    description: "user login successfully", schema: {
-      type: "object",
+    description: 'user login successfully',
+    schema: {
+      type: 'object',
       properties: {
-        msg: { type: 'string' }
-      }
-    }
+        msg: { type: 'string' },
+      },
+    },
   })
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginUserDto, @Req() req: Request) {
-    return this.userService.login(loginDto)
+    return this.userService.login(loginDto);
   }
 }

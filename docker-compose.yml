@@ -11,8 +11,8 @@ services:
     depends_on:
       - mongo_db
     volumes:
-      - public-data:/app/public
       - .:/app
+      - public-data:/app/public
     networks:
       - app
   
