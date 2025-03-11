@@ -11,12 +11,8 @@ async function bootstrap() {
       username: 'admin',
       password: 'admin',
     });
-
-    console.log('Admin created successfully');
     await app.close();
-  } catch (err) {
-    console.error('admin exist .');
-  }
+  } catch { }
   process.exit(1);
 }
 
