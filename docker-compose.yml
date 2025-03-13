@@ -35,6 +35,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: no
+    profiles:
+      - seed
     env_file:
       - .env
     networks:

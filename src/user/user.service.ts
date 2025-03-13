@@ -19,7 +19,7 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     protected readonly jwt: JwtService,
-  ) {}
+  ) { }
 
   async createUser({
     password,
@@ -47,9 +47,8 @@ export class UserService {
         id: insertedId,
       };
     } catch (err) {
+      this.logger.error(err.message)
       if (err instanceof HttpException) throw err;
-
-      this.logger.error(err);
       throw new InternalServerErrorException(err);
     }
   }
