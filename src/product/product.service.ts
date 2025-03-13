@@ -17,7 +17,7 @@ import { Product } from './entity/product.entity';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly productRepository: ProductRepository) {}
+  constructor(private readonly productRepository: ProductRepository) { }
 
   private logger = new Logger(ProductService.name);
 
@@ -136,7 +136,6 @@ export class ProductService {
       return result;
     } catch (err) {
       if (err instanceof HttpException) throw err;
-
       this.logger.error(err.message);
       throw new InternalServerErrorException();
     }
