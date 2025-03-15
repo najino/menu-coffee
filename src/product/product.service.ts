@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   Injectable,
   InternalServerErrorException,
@@ -34,7 +35,7 @@ export class ProductService {
     const writeStream = createWriteStream(fileName);
     Readable.from(fileBuf).pipe(writeStream).on('error', (err) => {
       this.logger.error(err)
-      throw new InternalServerErrorException(err.message)
+      throw new BadRequestException("Error During Upload.")
     })
   }
 
