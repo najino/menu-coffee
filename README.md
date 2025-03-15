@@ -106,11 +106,12 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 - [x] Product CRUD
 - [x] Product Status
 - [x] Fetch Product List
-- [x] singup With UserName And Password
+- [x] singUp With UserName And Password
 - [x] Login With UserName And Password
 - [x] Admin Panel
 - [x] OpenApi Documentation
 - [x] Unit Test
+- [x] Compressing Image
 - [ ] E2E Test
 
 ## Packagesc

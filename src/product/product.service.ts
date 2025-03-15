@@ -14,16 +14,16 @@ import Decimal from 'decimal.js';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { ObjectId } from 'mongodb';
 import { Product } from './entity/product.entity';
+import * as sharp from 'sharp';
+import { Readable } from 'stream';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly productRepository: ProductRepository) {}
+  constructor(private readonly productRepository: ProductRepository) { }
 
   private logger = new Logger(ProductService.name);
 
-  // generate FileName
   private genFileName(file: Express.Multer.File) {
-    // create FileName
     const ext = extname(file.originalname);
     const fileName = Math.floor(Math.random() * 1e7 * Date.now());
     const fullPath = join(process.cwd(), 'public', 'product', fileName + ext);
@@ -31,21 +31,12 @@ export class ProductService {
     return { fullPath, urlPath: `/public/product/${fileName}${ext}` };
   }
 
-  private uploadFile(file: Express.Multer.File) {
-    // create FileName
-    const { fullPath, urlPath } = this.genFileName(file);
-    // create WriteStream
-    const writeStream = createWriteStream(fullPath);
-
-    // write image into Directory
-    writeStream.write(file.buffer, (err) => {
-      if (err) {
-        this.logger.error(err.message);
-        throw new BadRequestException('Error During Upload.');
-      }
-    });
-
-    return urlPath;
+  private uploadFile(fileBuf: Buffer, fileName: string) {
+    const writeStream = createWriteStream(fileName);
+    Readable.from(fileBuf).pipe(writeStream).on('error', (err) => {
+      this.logger.error(err)
+      throw new BadRequestException("Error During Upload.")
+    })
   }
 
   private removeFile(path: string) {
@@ -65,9 +56,15 @@ export class ProductService {
       // convert price to Decimal
       const decimalPrice = new Decimal(price).valueOf();
 
+      // compressing Img
+      const buf = await this.compressingImg(img.buffer);
+
+      const { fullPath, urlPath } = this.genFileName(img)
+      this.uploadFile(buf, fullPath)
+
       const { insertedId } = await this.productRepository.create({
         description,
-        img: this.uploadFile(img),
+        img: urlPath,
         models: models,
         name,
         price: decimalPrice.valueOf(),
@@ -75,7 +72,6 @@ export class ProductService {
       });
 
       // Store Image Into Storage If Product Saved Successful
-
       return this.productRepository.findOne({ _id: insertedId });
     } catch (err) {
       if (err instanceof HttpException) throw err;
@@ -123,8 +119,9 @@ export class ProductService {
       if (img) {
         this.removeFile(product.img);
 
-        const path = this.uploadFile(img);
-        payload['img'] = path;
+        const { fullPath, urlPath } = this.genFileName(img)
+        this.uploadFile(await this.compressingImg(img.buffer), fullPath);
+        payload['img'] = urlPath;
       }
 
       // get Product and Update them
@@ -136,7 +133,6 @@ export class ProductService {
       return result;
     } catch (err) {
       if (err instanceof HttpException) throw err;
-
       this.logger.error(err.message);
       throw new InternalServerErrorException();
     }
@@ -164,5 +160,12 @@ export class ProductService {
     return {
       status: product.status,
     };
+  }
+
+
+  private compressingImg(img: Buffer) {
+    return sharp(img)
+      .resize(200, 200)
+      .toBuffer()
   }
 }
