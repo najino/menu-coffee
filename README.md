@@ -114,11 +114,11 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 - [x] Compressing Image
 - [ ] E2E Test
 
-## Packagesc
+## Packages 
 
 ### MongoDb (https://www.mongodb.com/docs/drivers/node/current/)
 
-### DecimalJs(To Preven Floating Point (IEEE 754))(https://www.npmjs.com/package/decimal.js)
+### DecimalJs(To Prevent Floating Point (IEEE 754))(https://www.npmjs.com/package/decimal.js)
 
 ### Multer For Working With file
 

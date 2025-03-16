@@ -12,7 +12,7 @@ async function bootstrap() {
       password: 'admin',
     });
     await app.close();
-  } catch { }
+  } catch {}
   process.exit(1);
 }
 
