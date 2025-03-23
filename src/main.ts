@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -13,6 +13,15 @@ async function bootstrap() {
     logger,
   });
 
+
+  app.setGlobalPrefix(process.env.PREFIX);
+
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: process.env.VERSION
+  });
+
+
   app.enableCors({
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -23,14 +32,14 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
   const documentFactory = swaggerCreator(app);
-  SwaggerModule.setup('api', app, documentFactory);
+  SwaggerModule.setup('doc', app, documentFactory);
 
   app.useStaticAssets(join(__dirname, '..', 'public'), { prefix: '/public/' });
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port, () => {
-    logger.log(`server listening on http://localhost:${port}`);
-    logger.log(`OPENAPI on http://localhost:${port}/api`);
+    logger.log(`server listening on http://localhost:${port}/${process.env.PREFIX}`);
+    logger.log(`OPENAPI on http://localhost:${port}/doc`);
   });
 }
 bootstrap();
