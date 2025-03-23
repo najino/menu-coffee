@@ -19,7 +19,7 @@ import { Readable } from 'stream';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly productRepository: ProductRepository) { }
+  constructor(private readonly productRepository: ProductRepository) {}
 
   private logger = new Logger(ProductService.name);
 
@@ -33,10 +33,12 @@ export class ProductService {
 
   private uploadFile(fileBuf: Buffer, fileName: string) {
     const writeStream = createWriteStream(fileName);
-    Readable.from(fileBuf).pipe(writeStream).on('error', (err) => {
-      this.logger.error(err)
-      throw new BadRequestException("Error During Upload.")
-    })
+    Readable.from(fileBuf)
+      .pipe(writeStream)
+      .on('error', (err) => {
+        this.logger.error(err);
+        throw new BadRequestException('Error During Upload.');
+      });
   }
 
   private removeFile(path: string) {
@@ -59,8 +61,8 @@ export class ProductService {
       // compressing Img
       const buf = await this.compressingImg(img.buffer);
 
-      const { fullPath, urlPath } = this.genFileName(img)
-      this.uploadFile(buf, fullPath)
+      const { fullPath, urlPath } = this.genFileName(img);
+      this.uploadFile(buf, fullPath);
 
       const { insertedId } = await this.productRepository.create({
         description,
@@ -119,7 +121,7 @@ export class ProductService {
       if (img) {
         this.removeFile(product.img);
 
-        const { fullPath, urlPath } = this.genFileName(img)
+        const { fullPath, urlPath } = this.genFileName(img);
         this.uploadFile(await this.compressingImg(img.buffer), fullPath);
         payload['img'] = urlPath;
       }
@@ -162,10 +164,7 @@ export class ProductService {
     };
   }
 
-
   private compressingImg(img: Buffer) {
-    return sharp(img)
-      .resize(200, 200)
-      .toBuffer()
+    return sharp(img).resize(200, 200).toBuffer();
   }
 }

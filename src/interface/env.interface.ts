@@ -6,10 +6,11 @@ export class IEnv {
   NODE_ENV: string;
   ACCESS_TOKEN_SECRET: string;
   ACCESS_TOKEN_EXPIRE: string;
+  PREFIX: string;
 }
 
 declare global {
   namespace NodeJS {
-    interface ProcessEnv extends IEnv {}
+    interface ProcessEnv extends IEnv { }
   }
 }

@@ -112,27 +112,28 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 - [x] OpenApi Documentation
 - [x] Unit Test
 - [x] Compressing Image
-- [ ] E2E Test
 
-## Packagesc
+#### Packages 
 
-### MongoDb (https://www.mongodb.com/docs/drivers/node/current/)
+#### MongoDb (https://www.mongodb.com/docs/drivers/node/current/)
 
-### DecimalJs(To Preven Floating Point (IEEE 754))(https://www.npmjs.com/package/decimal.js)
+#### DecimalJs(To Prevent Floating Point (IEEE 754))(https://www.npmjs.com/package/decimal.js)
 
-### Multer For Working With file
+#### Multer For Working With file
 
-### Swagger For Documentation
+#### Swagger For Documentation
 
-### Jest For testing
+#### Jest For testing
 
-### express-session for SessionBased Authorization
+#### express-session for SessionBased Authorization
 
-### nestjs as a main Framwork
+#### nestjs as a main framework 
 
-### pnpm as a Package manager
+#### pnpm as a Package manager
 
-## using dokcer for run(Recomendatioin)
+## Installation
+
+### using Docker
 
 1. Clone the repository:
 
@@ -163,7 +164,4 @@ docker compose up
 ```bash
 # Run tests
 npm test
-
-# Run E2E tests
-npm run test:e2e
 ```

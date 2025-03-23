@@ -1,8 +1,11 @@
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 
-const infoFileLogger = new winston.transports.File({ filename: `${process.cwd()}/logs/combine.log`, level: 'info' })
-const consoleLogger = new winston.transports.Console()
+const infoFileLogger = new winston.transports.File({
+  filename: `${process.cwd()}/logs/combine.log`,
+  level: 'info',
+});
+const consoleLogger = new winston.transports.Console();
 
 const transports: winston.transport[] = [];
 
@@ -12,12 +15,11 @@ if (process.env.NODE_ENV === 'production') {
       filename: `${process.cwd()}/logs/error.log`,
       level: 'error',
     }),
-    infoFileLogger
+    infoFileLogger,
   );
 } else {
-  transports.push(consoleLogger)
+  transports.push(consoleLogger);
 }
-
 
 const logger = WinstonModule.createLogger({
   format: winston.format.combine(

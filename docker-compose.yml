@@ -6,13 +6,15 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      - NODE_ENV=production
     ports:
       - ${PORT}:3000
     depends_on:
       - mongo_db
     volumes:
-      - .:/app
       - public-data:/app/public
+      - ./logs:/app/logs
     networks:
       - app
   

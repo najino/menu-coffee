@@ -17,7 +17,7 @@ import {
 } from '@nestjs/common';
 import { Product } from '../entity/product.entity';
 import { Readable } from 'stream';
-import * as sharp from 'sharp'
+import * as sharp from 'sharp';
 
 describe('Product Service', () => {
   let service: ProductService;
@@ -31,7 +31,6 @@ describe('Product Service', () => {
   };
 
   beforeEach(async () => {
-
     const module = await Test.createTestingModule({
       providers: [
         ProductService,
@@ -54,17 +53,18 @@ describe('Product Service', () => {
       const objId = '1234' as unknown as ObjectId;
 
       // mock Readable
-      jest.spyOn(Readable, 'from').mockImplementation(() => ({
-        pipe: jest.fn().mockReturnValue({
-          on: jest.fn()
-        })
-      }) as unknown as Readable)
-
-
+      jest.spyOn(Readable, 'from').mockImplementation(
+        () =>
+          ({
+            pipe: jest.fn().mockReturnValue({
+              on: jest.fn(),
+            }),
+          }) as unknown as Readable,
+      );
 
       jest.spyOn(sharp.prototype, 'resize').mockReturnValue({
-        toBuffer: jest.fn().mockResolvedValueOnce(Buffer.from("mock"))
-      } as unknown as sharp.Sharp)
+        toBuffer: jest.fn().mockResolvedValueOnce(Buffer.from('mock')),
+      } as unknown as sharp.Sharp);
 
       jest
         .spyOn(productRepoMock, 'create')
@@ -114,7 +114,7 @@ describe('Product Service', () => {
         models: [],
         status: true,
       });
-      expect(sharp.prototype.resize).toHaveBeenCalledWith(200, 200)
+      expect(sharp.prototype.resize).toHaveBeenCalledWith(200, 200);
     });
 
     it('should throw InternalServerErrorException if repository fails', async () => {
@@ -141,21 +141,22 @@ describe('Product Service', () => {
     it('Should throw BadRequest if has Error During UploadFile', () => {
       const objId = '1234' as unknown as ObjectId;
       // mock Readable
-      jest.spyOn(Readable, 'from').mockImplementation(() => ({
-        pipe: jest.fn().mockReturnValue({
-          on: jest.fn().mockImplementation((err, cb) => {
-            if (err === 'error') {
-              cb(new Error("some error"))
-            }
-          })
-        })
-      }) as unknown as Readable)
-
-
+      jest.spyOn(Readable, 'from').mockImplementation(
+        () =>
+          ({
+            pipe: jest.fn().mockReturnValue({
+              on: jest.fn().mockImplementation((err, cb) => {
+                if (err === 'error') {
+                  cb(new Error('some error'));
+                }
+              }),
+            }),
+          }) as unknown as Readable,
+      );
 
       jest.spyOn(sharp.prototype, 'resize').mockReturnValue({
-        toBuffer: jest.fn().mockResolvedValueOnce(Buffer.from("mock"))
-      } as unknown as sharp.Sharp)
+        toBuffer: jest.fn().mockResolvedValueOnce(Buffer.from('mock')),
+      } as unknown as sharp.Sharp);
 
       jest
         .spyOn(productRepoMock, 'create')
@@ -188,7 +189,6 @@ describe('Product Service', () => {
 
   describe('findAll', () => {
     beforeAll(async () => {
-
       productRepoMock.findAll.mockImplementation(
         (where: any, options: any) =>
           products as unknown as FindCursor<WithId<Product>>,
@@ -203,7 +203,7 @@ describe('Product Service', () => {
           price: '12000',
           status: true,
         };
-        products.push(productFake)
+        products.push(productFake);
       }
     });
 
@@ -242,7 +242,6 @@ describe('Product Service', () => {
     });
 
     it('Should be throw NotFoundException Because Product Not Found', () => {
-
       jest
         .spyOn(productRepoMock, 'update')
         .mockImplementationOnce((_: any, payload: any) => payload);
@@ -285,18 +284,18 @@ describe('Product Service', () => {
       jest.spyOn(fs, 'rmSync').mockReturnValue();
 
       // mock Readable
-      jest.spyOn(Readable, 'from').mockImplementation(() => ({
-        pipe: jest.fn().mockReturnValue({
-          on: jest.fn()
-        })
-      }) as unknown as Readable)
-
-
+      jest.spyOn(Readable, 'from').mockImplementation(
+        () =>
+          ({
+            pipe: jest.fn().mockReturnValue({
+              on: jest.fn(),
+            }),
+          }) as unknown as Readable,
+      );
 
       jest.spyOn(sharp.prototype, 'resize').mockReturnValue({
-        toBuffer: jest.fn().mockResolvedValueOnce(Buffer.from("mock"))
-      } as unknown as sharp.Sharp)
-
+        toBuffer: jest.fn().mockResolvedValueOnce(Buffer.from('mock')),
+      } as unknown as sharp.Sharp);
 
       const mockProduct = {
         img: 'path',

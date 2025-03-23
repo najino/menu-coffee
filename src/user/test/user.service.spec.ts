@@ -46,13 +46,11 @@ describe('User Service Testing', () => {
 
   describe('Register User', () => {
     it('should be throw an Error because username is exist before.', () => {
-      jest
-        .spyOn(userRepositoryMock, 'findOne')
-        .mockResolvedValueOnce({
-          _id: 'id' as unknown as ObjectId,
-          username: 'test',
-          password: 'testPass',
-        });
+      jest.spyOn(userRepositoryMock, 'findOne').mockResolvedValueOnce({
+        _id: 'id' as unknown as ObjectId,
+        username: 'test',
+        password: 'testPass',
+      });
 
       const promise = service.createUser({
         username: 'test',
@@ -65,12 +63,10 @@ describe('User Service Testing', () => {
 
     it('should be registered user', async () => {
       jest.spyOn(userRepositoryMock, 'findOne').mockResolvedValueOnce(null);
-      jest
-        .spyOn(userRepositoryMock, 'create')
-        .mockResolvedValueOnce({
-          acknowledged: true,
-          insertedId: 'id' as unknown as ObjectId,
-        });
+      jest.spyOn(userRepositoryMock, 'create').mockResolvedValueOnce({
+        acknowledged: true,
+        insertedId: 'id' as unknown as ObjectId,
+      });
       jest.spyOn(bcrypt, 'hash').mockResolvedValueOnce('hash-pass' as never);
       jest.spyOn(bcrypt, 'genSalt').mockResolvedValueOnce('new-salt' as never);
 
