@@ -1,8 +1,9 @@
 {
-"app":"coffee-menue"
-"port":3000
+"app":"coffee-menue",
+"port":"3000",
 "build":{
 "location":"iran"
-}
-"disks":[]
+},
+"disks":[
+]
 }
