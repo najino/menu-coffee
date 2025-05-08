@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -25,6 +26,7 @@ import {
   ApiExtraModels,
   ApiNotFoundResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiParam,
   ApiQuery,
   ApiResponseProperty,
@@ -34,12 +36,14 @@ import {
 import { HttpExceptionDto } from '../dtos/http-exception.dto';
 import { ProductDto } from './dtos/product.dto';
 import { FilePipeBuilder } from './pipes/file-builder.pipe';
+import { ObjectId } from 'mongodb';
 
 @Controller('products')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(private readonly productService: ProductService) { }
 
   @Post()
+  @ApiOperation({ summary: "Create new Product" })
   @ApiTags('Admin')
   @ApiExtraModels(CreateProductDto)
   @ApiBearerAuth('JWT-AUTH')
@@ -74,7 +78,8 @@ export class ProductController {
   }
 
   @Get()
-  @ApiOkResponse({ description: 'Products fetched successfully' })
+  @ApiOperation({ summary: "Get All Products" })
+  @ApiOkResponse({ description: 'Products fetched successfully', type: [ProductDto] })
   @ApiQuery({
     name: 'limit',
     description: 'limit Of Product You want to fetched By Default(10)',
@@ -89,7 +94,15 @@ export class ProductController {
     return this.productService.findAll(+limit, +page);
   }
 
+  @Get(":id")
+  @ApiOperation({ summary: "Get Products By ID" })
+  @ApiOkResponse({ description: 'Product fetched successfully', type: ProductDto })
+  @ApiParam({ name: "id", description: "ProductId" })
+  findOne(@Param() { id }: MongoIdDto) {
+    return this.productService.getProductById(id);
+  }
   @Patch(':id')
+  @ApiOperation({ summary: "Update Product" })
   @ApiBearerAuth('JWT-AUTH')
   @ApiExtraModels(UpdateProductDto)
   @ApiParam({ name: 'id', description: 'Product Id (Mongo ObjectId)' })
@@ -131,6 +144,7 @@ export class ProductController {
     return this.productService.update(id, updateProductDto, img);
   }
 
+  @ApiOperation({ summary: "Delete Product" })
   @Delete(':id')
   @ApiBearerAuth('JWT-AUTH')
   @ApiTags('Admin')
@@ -149,6 +163,7 @@ export class ProductController {
   }
 
   @Get(':id/status')
+  @ApiOperation({ summary: "Get Product Status " })
   @ApiParam({ name: 'id', description: 'Product Id' })
   @ApiOkResponse({
     schema: {
