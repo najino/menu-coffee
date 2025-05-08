@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -35,6 +36,7 @@ import {
 import { HttpExceptionDto } from '../dtos/http-exception.dto';
 import { ProductDto } from './dtos/product.dto';
 import { FilePipeBuilder } from './pipes/file-builder.pipe';
+import { ObjectId } from 'mongodb';
 
 @Controller('products')
 export class ProductController {
@@ -77,7 +79,7 @@ export class ProductController {
 
   @Get()
   @ApiOperation({ summary: "Get All Products" })
-  @ApiOkResponse({ description: 'Products fetched successfully' })
+  @ApiOkResponse({ description: 'Products fetched successfully', type: [ProductDto] })
   @ApiQuery({
     name: 'limit',
     description: 'limit Of Product You want to fetched By Default(10)',
@@ -92,6 +94,13 @@ export class ProductController {
     return this.productService.findAll(+limit, +page);
   }
 
+  @Get(":id")
+  @ApiOperation({ summary: "Get Products By ID" })
+  @ApiOkResponse({ description: 'Product fetched successfully', type: ProductDto })
+  @ApiParam({ name: "id", description: "ProductId" })
+  findOne(@Param() { id }: MongoIdDto) {
+    return this.productService.getProductById(id);
+  }
   @Patch(':id')
   @ApiOperation({ summary: "Update Product" })
   @ApiBearerAuth('JWT-AUTH')
