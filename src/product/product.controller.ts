@@ -25,6 +25,7 @@ import {
   ApiExtraModels,
   ApiNotFoundResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiParam,
   ApiQuery,
   ApiResponseProperty,
@@ -37,9 +38,10 @@ import { FilePipeBuilder } from './pipes/file-builder.pipe';
 
 @Controller('products')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(private readonly productService: ProductService) { }
 
   @Post()
+  @ApiOperation({ summary: "Create new Product" })
   @ApiTags('Admin')
   @ApiExtraModels(CreateProductDto)
   @ApiBearerAuth('JWT-AUTH')
@@ -74,6 +76,7 @@ export class ProductController {
   }
 
   @Get()
+  @ApiOperation({ summary: "Get All Products" })
   @ApiOkResponse({ description: 'Products fetched successfully' })
   @ApiQuery({
     name: 'limit',
@@ -90,6 +93,7 @@ export class ProductController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: "Update Product" })
   @ApiBearerAuth('JWT-AUTH')
   @ApiExtraModels(UpdateProductDto)
   @ApiParam({ name: 'id', description: 'Product Id (Mongo ObjectId)' })
@@ -131,6 +135,7 @@ export class ProductController {
     return this.productService.update(id, updateProductDto, img);
   }
 
+  @ApiOperation({ summary: "Delete Product" })
   @Delete(':id')
   @ApiBearerAuth('JWT-AUTH')
   @ApiTags('Admin')
@@ -149,6 +154,7 @@ export class ProductController {
   }
 
   @Get(':id/status')
+  @ApiOperation({ summary: "Get Product Status " })
   @ApiParam({ name: 'id', description: 'Product Id' })
   @ApiOkResponse({
     schema: {
