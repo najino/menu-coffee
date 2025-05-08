@@ -17,6 +17,7 @@ import {
   ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -24,10 +25,11 @@ import { Request } from 'express';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @Post()
   @IsAuth()
+  @ApiOperation({ summary: "Register new User" })
   @ApiTags('Admin')
   @ApiBearerAuth('JWT-AUTH')
   @ApiCreatedResponse({
@@ -48,6 +50,7 @@ export class UserController {
   }
 
   @Post('login')
+  @ApiOperation({ summary: "Get AccessToken" })
   @ApiNotFoundResponse({ description: 'credential are invalid' })
   @ApiOkResponse({
     description: 'user login successfully',

@@ -19,7 +19,7 @@ import { Readable } from 'stream';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly productRepository: ProductRepository) {}
+  constructor(private readonly productRepository: ProductRepository) { }
 
   private logger = new Logger(ProductService.name);
 
@@ -47,6 +47,14 @@ export class ProductService {
     if (existsSync(fullPath)) rmSync(fullPath);
 
     return;
+  }
+
+  async getProductById(id: ObjectId) {
+    const result = await this.productRepository.findOne({ _id: new ObjectId(id) });
+    if (!result)
+      throw new NotFoundException("Product not found")
+
+    return result
   }
 
   async createProduct(
