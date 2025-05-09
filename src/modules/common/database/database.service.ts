@@ -14,6 +14,7 @@ export class MongoDbService implements OnModuleInit {
   constructor(private readonly configService: ConfigService<IEnv>) {
     // get MongoDB URI From ENV
     const uri = this.configService.getOrThrow('MONGO_URI');
+    console.log('URI IS' , uri)
     this.client = new MongoClient(uri);
     this.db = this.client.db(this.configService.getOrThrow('DB_NAME'));
   }
