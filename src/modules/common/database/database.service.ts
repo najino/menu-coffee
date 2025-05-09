@@ -25,6 +25,7 @@ export class MongoDbService implements OnModuleInit {
       this.logger.log('connected successfully');
     } catch (err) {
       this.logger.error('fail to connect db');
+      this.logger.error(err)
       process.exit(1);
     }
   }

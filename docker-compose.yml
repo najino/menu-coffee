@@ -19,8 +19,10 @@ services:
       - app
   
   mongo_db:
-    image: mongo 
+    image: mongo:4.4
     restart: always
+    env_file:
+      - .env
     networks:
       - app
     ports:
@@ -36,7 +38,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: no
+    restart: always
     profiles:
       - seed
     env_file:
