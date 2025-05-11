@@ -50,7 +50,7 @@ export class CategoryService {
         if(categoryData.slug)
             categoryData.slug = this.slugify(categoryData.slug);
 
-        return this.categoryRepository.update(new ObjectId(id), categoryData);
+        return this.categoryRepository.update({_id:new ObjectId(id)}, categoryData);
  
         }catch(err){
             if(err instanceof HttpException)

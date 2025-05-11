@@ -15,10 +15,8 @@ services:
     volumes:
       - public-data:/app/public
       - ./logs:/app/logs
-      - .:/app
     networks:
       - app
-    command: ['pnpm',"run","start:dev"]
   
   mongo_db:
     image: mongo 
