@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { MongoDbService } from '../database/database.service';
 import { User } from './entity/user.entity';
-import { CollectionName } from '../database/enum/collection.enum';
-import { Repository } from '../abstract/repository.abstract';
+import { Repository } from '../common/abstract/repository.abstract';
+import { MongoDbService } from '../common/database/database.service';
+import { CollectionName } from '../common/database/enum/collection.enum';
 
 @Injectable()
 export class UserRepository extends Repository<User> {

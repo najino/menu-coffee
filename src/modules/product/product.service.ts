@@ -9,7 +9,7 @@ import {
 import { ProductRepository } from './product.repository';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { extname, join } from 'path';
-import { createWriteStream, existsSync, rmSync } from 'fs';
+import { createWriteStream, existsSync, rmSync, unlink } from 'fs';
 import Decimal from 'decimal.js';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { ObjectId } from 'mongodb';
@@ -42,6 +42,9 @@ export class ProductService {
   }
 
   private removeFile(path: string) {
+    if (!path)
+      return
+
     const fullPath = join(process.cwd(), path);
 
     if (existsSync(fullPath)) rmSync(fullPath);
@@ -59,18 +62,23 @@ export class ProductService {
 
   async createProduct(
     createProductDto: CreateProductDto,
-    img: Express.Multer.File,
+    img?: Express.Multer.File,
   ) {
     try {
       const { description, models, name, price, status } = createProductDto;
       // convert price to Decimal
       const decimalPrice = new Decimal(price).valueOf();
 
-      // compressing Img
-      const buf = await this.compressingImg(img.buffer);
+      let urlPath = undefined;
 
-      const { fullPath, urlPath } = this.genFileName(img);
-      this.uploadFile(buf, fullPath);
+      if (img) {
+        // compressing Img
+        const buf = await this.compressingImg(img.buffer);
+
+        const { fullPath, urlPath } = this.genFileName(img);
+        this.uploadFile(buf, fullPath);
+
+      }
 
       const { insertedId } = await this.productRepository.create({
         description,
@@ -106,28 +114,31 @@ export class ProductService {
     updateProductDto: UpdateProductDto,
     img?: Express.Multer.File,
   ) {
-    let payload: Partial<Product> = {};
 
-    for (const prop in updateProductDto) {
-      if (updateProductDto[prop] && prop === 'status') {
-        payload[prop] = updateProductDto[prop] === '1' ? true : false;
-      } else if (updateProductDto[prop] && prop === 'price') {
-        // use DecimalJs to prevent Floating Point
-        payload[prop] = new Decimal(updateProductDto[prop]).valueOf();
-      } else if (updateProductDto[prop]) {
-        payload[prop] = updateProductDto[prop];
-      }
-    }
 
     try {
       const product = await this.productRepository.findOne({
         _id: new ObjectId(id),
       });
 
+
       if (!product) throw new NotFoundException('Product not found.');
 
+      let payload: Partial<Product> = {};
+
+      for (const prop in updateProductDto) {
+        if (updateProductDto[prop] && prop === 'status') {
+          payload[prop] = updateProductDto[prop] === '1' ? true : false;
+        } else if (updateProductDto[prop] && prop === 'price') {
+          // use DecimalJs to prevent Floating Point
+          payload[prop] = new Decimal(updateProductDto[prop]).valueOf();
+        } else if (updateProductDto[prop]) {
+          payload[prop] = updateProductDto[prop];
+        }
+      }
+
       if (img) {
-        this.removeFile(product.img);
+        this.removeFile(product.img || "");
 
         const { fullPath, urlPath } = this.genFileName(img);
         this.uploadFile(await this.compressingImg(img.buffer), fullPath);
@@ -155,7 +166,7 @@ export class ProductService {
 
     if (!product) throw new NotFoundException('Product not found.');
 
-    this.removeFile(product.img);
+    this.removeFile(product.img || "");
 
     return product;
   }

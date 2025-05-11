@@ -6,4 +6,4 @@ import { MongoDbService } from './database.service';
   exports: [MongoDbService],
   providers: [MongoDbService],
 })
-export class DatabaseModule {}
+export class DatabaseModule { }
