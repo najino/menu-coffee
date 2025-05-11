@@ -18,6 +18,7 @@ services:
       - .:/app
     networks:
       - app
+    command: ['pnpm',"run","start:dev"]
   
   mongo_db:
     image: mongo 

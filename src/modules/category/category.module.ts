@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, OnModuleInit } from "@nestjs/common";
 import { CategoryRepository } from "./category.repository";
 import { CategoryService } from "./category.service";
 import { CategoryController } from "./category.controller";
@@ -7,4 +7,8 @@ import { CategoryController } from "./category.controller";
     controllers: [CategoryController],
     providers: [CategoryRepository, CategoryService]
 })
-export class CategoryModule { }
+export class CategoryModule implements OnModuleInit{
+    onModuleInit() {
+        console.log("I am here")
+    }
+ }
