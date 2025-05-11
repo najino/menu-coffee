@@ -1,8 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Db, Document, MongoClient } from 'mongodb';
-import { IEnv } from 'src/interface/env.interface';
 import { CollectionName } from './enum/collection.enum';
+import { IEnv } from '../interface/env.interface';
 
 @Injectable()
 export class MongoDbService implements OnModuleInit {

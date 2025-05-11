@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ProductModule } from './product/product.module';
-import { UserModule } from './user/user.module';
-import { DatabaseModule } from './database/database.module';
+import { DatabaseModule } from './modules/common/database/database.module';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
-import { AuthGuard } from './guard/auth.guard';
 import { JwtModule } from '@nestjs/jwt';
+import { CommonModule } from './modules/common/common.module';
+import { ProductModule } from './modules/product/product.module';
+import { UserModule } from './modules/user/user.module';
+import { CategoryModule } from './modules/category/category.module';
 
 @Module({
   imports: [
@@ -17,14 +17,10 @@ import { JwtModule } from '@nestjs/jwt';
     }),
     ProductModule,
     UserModule,
-    DatabaseModule,
+    CommonModule,
+    CategoryModule,
     JwtModule.register({}),
-  ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: AuthGuard,
-    },
+    DatabaseModule
   ],
 })
-export class AppModule {}
+export class AppModule { }

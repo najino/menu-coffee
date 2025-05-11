@@ -1,19 +1,20 @@
 import { Test } from '@nestjs/testing';
 import { UserService } from '../user.service';
-import { UserRepository } from '../user.repository';
 import { ObjectId } from 'mongodb';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
+import { UserRepository } from '../user.repository';
 
 describe('User Service Testing', () => {
-  let userRepositoryMock: Partial<UserRepository> = {
+
+  const userRepositoryMock: UserRepository = {
     create: jest.fn(),
     delete: jest.fn(),
     findAll: jest.fn(),
     findOne: jest.fn(),
     update: jest.fn(),
-  };
+  } as unknown as UserRepository;
 
   let jwtMock: Partial<JwtService> = {
     signAsync: jest.fn(),

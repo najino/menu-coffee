@@ -3,9 +3,7 @@ import { ProductService } from '../product.service';
 import { ProductRepository } from '../product.repository';
 import {
   FindCursor,
-  InsertOneResult,
   ObjectId,
-  OptionalId,
   WithId,
 } from 'mongodb';
 import * as fs from 'fs';

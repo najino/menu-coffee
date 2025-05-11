@@ -1,0 +1,45 @@
+import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { IsAuth } from "../common/decorator/auth.decorator";
+import { CreateCategoryDto } from "./dto/create-category.dto";
+import { CategoryService } from "./category.service";
+import { UpdateCategoryDto } from "./dto/update-category.dto";
+import { MongoIdPipe } from "../common/pipes/mongoId.pipe";
+
+@Controller("categories")
+export class CategoryController {
+    constructor(
+        private readonly categoryService:CategoryService
+    ){}
+
+    @Post()
+    @IsAuth()
+    async createCategory(@Body() createCategoryDto:CreateCategoryDto) {
+        await this.categoryService.create(createCategoryDto);
+
+        return {
+            msg:"Category Saved Successfully"
+        }
+    }
+
+    @Get(":slug")
+    getCategoryBySlug(@Param("slug") slug:string) {
+        return this.categoryService.findBySlug(slug);
+    }
+
+    @Get()
+    getCategories() {
+        return this.categoryService.findAll();
+    }
+
+    @Patch(":id")
+    @IsAuth()
+    updateCategory(@Param("id",MongoIdPipe)categoryId:string,@Body() updateCategoryDto:UpdateCategoryDto) {
+        return this.categoryService.update(categoryId,updateCategoryDto);
+    }
+
+    @Delete(":id")
+    @IsAuth()
+    deleteCategory(@Param("id",MongoIdPipe)categoryId:string) {
+        return this.categoryService.remove(categoryId);
+    }
+}
