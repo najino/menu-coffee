@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from "@nestjs/common";
 import { CategoryRepository } from "./category.repository";
 import { CreateCategoryDto } from "./dto/create-category.dto";
 import { ObjectId } from "mongodb";
@@ -8,20 +8,34 @@ import { UpdateCategoryDto } from "./dto/update-category.dto";
 export class CategoryService {
 
     constructor(private readonly categoryRepository: CategoryRepository) { }
+
+    private logger = new Logger(CategoryService.name)
+
     async create(categoryData: CreateCategoryDto) {
         const category = await this.categoryRepository.findBySlug(categoryData.slug)
         if(category)
             throw new BadRequestException("Category Is Exist Before.")
 
-        return this.categoryRepository.create(categoryData);
-    }
+        try{
+            const result = await this.categoryRepository.create(categoryData);
+            return result.acknowledged
+        }catch(err){
+            this.logger.error(err)
+            throw new InternalServerErrorException();
+        }
+   }
 
     async findAll() {
         return this.categoryRepository.findAll();
     }
 
     async findBySlug(slug: string) {
-        return this.categoryRepository.findBySlug(slug);
+        const result = await this.categoryRepository.findBySlug(slug);
+        if(!result)
+            throw new NotFoundException("Category Not Found.")
+
+
+        return result;
     }
 
 
