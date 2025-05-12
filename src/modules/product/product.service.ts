@@ -9,17 +9,18 @@ import {
 import { ProductRepository } from './product.repository';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { extname, join } from 'path';
-import { createWriteStream, existsSync, rmSync, unlink } from 'fs';
+import { createWriteStream, existsSync, rmSync } from 'fs';
 import Decimal from 'decimal.js';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { ObjectId } from 'mongodb';
 import { Product } from './entity/product.entity';
 import * as sharp from 'sharp';
 import { Readable } from 'stream';
+import { CategoryService } from '../category/category.service';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly productRepository: ProductRepository) { }
+  constructor(private readonly productRepository: ProductRepository, private readonly categoryService: CategoryService) { }
 
   private logger = new Logger(ProductService.name);
 
@@ -65,7 +66,13 @@ export class ProductService {
     img?: Express.Multer.File,
   ) {
     try {
-      const { description, models, name, price, status } = createProductDto;
+      const { categoryId, description, models, name, price, status } = createProductDto;
+
+      const category = await this.categoryService.findById(categoryId);
+
+      if (!category)
+        throw new NotFoundException("Category Not Found.")
+
       // convert price to Decimal
       const decimalPrice = new Decimal(price).valueOf();
 
@@ -86,6 +93,7 @@ export class ProductService {
         models: models,
         name,
         price: decimalPrice.valueOf(),
+        category: category,
         status: status === '1' ? true : false,
       });
 

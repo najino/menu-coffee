@@ -1,3 +1,6 @@
+import { ObjectId } from "mongodb";
+import { Category } from "../../category/entity/category.entity";
+
 export interface Product {
   name: string;
   price: string;
@@ -5,4 +8,5 @@ export interface Product {
   models: string[];
   description: string;
   status: boolean;
+  category: Category
 }
