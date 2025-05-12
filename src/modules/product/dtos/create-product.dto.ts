@@ -1,10 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
-  ArrayMinSize,
   IsArray,
-  IsBoolean,
   IsIn,
+  IsMongoId,
   IsNotEmpty,
   IsNumberString,
   IsOptional,
@@ -50,4 +49,8 @@ export class CreateProductDto {
     examples: ['1', '0'],
   })
   status: string;
+
+  @IsMongoId()
+  @IsNotEmpty()
+  categoryId: string
 }

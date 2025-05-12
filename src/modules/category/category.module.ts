@@ -5,10 +5,9 @@ import { CategoryController } from "./category.controller";
 
 @Module({
     controllers: [CategoryController],
-    providers: [CategoryRepository, CategoryService]
+    providers: [CategoryRepository, CategoryService],
+    exports: [CategoryService],
 })
-export class CategoryModule implements OnModuleInit{
-    onModuleInit() {
-        console.log("I am here")
-    }
- }
+export class CategoryModule {
+
+}
