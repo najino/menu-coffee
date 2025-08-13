@@ -9,13 +9,12 @@ import {
 import { ProductRepository } from './product.repository';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { extname, join } from 'path';
-import { createWriteStream, existsSync, rmSync } from 'fs';
+import { writeFileSync, existsSync, rmSync } from 'fs';
 import Decimal from 'decimal.js';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { ObjectId } from 'mongodb';
 import { Product } from './entity/product.entity';
 import * as sharp from 'sharp';
-import { Readable } from 'stream';
 import { CategoryService } from '../category/category.service';
 
 @Injectable()
@@ -27,32 +26,68 @@ export class ProductService {
 
   private logger = new Logger(ProductService.name);
 
-  private genFileName(file: Express.Multer.File) {
-    const ext = extname(file.originalname);
-    const fileName = Math.floor(Math.random() * 1e7 * Date.now());
-    const fullPath = join(process.cwd(), 'public', 'product', fileName + ext);
+  /**
+   * Generate unique filename for uploaded image
+   * @param file - Uploaded file object
+   * @returns Object containing full path and URL path
+   */
+  private generateFileName(file: Express.Multer.File) {
+    const fileExtension = extname(file.originalname);
+    const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+    const fullPath = join(
+      process.cwd(),
+      'public',
+      'product',
+      `${uniqueFileName}${fileExtension}`,
+    );
+    const urlPath = `/public/product/${uniqueFileName}${fileExtension}`;
 
-    return { fullPath, urlPath: `/public/product/${fileName}${ext}` };
+    return { fullPath, urlPath };
   }
 
-  private uploadFile(fileBuf: Buffer, fileName: string) {
-    const writeStream = createWriteStream(fileName);
-    Readable.from(fileBuf)
-      .pipe(writeStream)
-      .on('error', (err) => {
-        this.logger.error(err);
-        throw new BadRequestException('Error During Upload.');
-      });
+  /**
+   * Save image file to local storage using writeFileSync
+   * @param fileBuffer - Compressed image buffer
+   * @param filePath - Full path where to save the file
+   */
+  private saveImageFile(fileBuffer: Buffer, filePath: string): void {
+    try {
+      writeFileSync(filePath, fileBuffer);
+    } catch (error) {
+      this.logger.error(`Failed to save image: ${error.message}`);
+      throw new BadRequestException('Error saving image file');
+    }
   }
 
-  private removeFile(path: string) {
-    if (!path) return;
+  /**
+   * Remove image file from local storage
+   * @param imagePath - Relative path of the image to remove
+   */
+  private removeImageFile(imagePath: string): void {
+    if (!imagePath) return;
 
-    const fullPath = join(process.cwd(), path);
+    const fullPath = join(process.cwd(), imagePath);
 
-    if (existsSync(fullPath)) rmSync(fullPath);
+    if (existsSync(fullPath)) {
+      try {
+        rmSync(fullPath);
+        this.logger.log(`Image removed: ${imagePath}`);
+      } catch (error) {
+        this.logger.error(`Failed to remove image: ${error.message}`);
+      }
+    }
+  }
 
-    return;
+  /**
+   * Compress and resize image to 200x200 pixels
+   * @param imageBuffer - Original image buffer
+   * @returns Compressed image buffer
+   */
+  private async compressImage(imageBuffer: Buffer): Promise<Buffer> {
+    return sharp(imageBuffer)
+      .resize(200, 200, { fit: 'cover' })
+      .jpeg({ quality: 80 })
+      .toBuffer();
   }
 
   async getProductById(id: ObjectId) {
@@ -66,104 +101,110 @@ export class ProductService {
 
   async createProduct(
     createProductDto: CreateProductDto,
-    img?: Express.Multer.File,
+    image?: Express.Multer.File,
   ) {
     try {
       const { categoryId, description, models, name, price, status } =
         createProductDto;
 
+      // Validate category exists
       const category = await this.categoryService.findById(categoryId);
-
       if (!category) throw new NotFoundException('Category Not Found.');
 
-      // convert price to Decimal
+      // Convert price to Decimal for precision
       const decimalPrice = new Decimal(price).valueOf();
 
-      let urlPath = '';
+      let imageUrl = '';
 
-      if (img) {
-        // compressing Img
-        const buf = await this.compressingImg(img.buffer);
+      // Process image if provided
+      if (image) {
+        const compressedImage = await this.compressImage(image.buffer);
+        const { fullPath, urlPath } = this.generateFileName(image);
 
-        const { fullPath, urlPath: url } = this.genFileName(img);
-        urlPath = url;
-        this.uploadFile(buf, fullPath);
+        this.saveImageFile(compressedImage, fullPath);
+        imageUrl = urlPath;
       }
 
+      // Create product in database
       const { insertedId } = await this.productRepository.create({
         description,
-        img: urlPath,
-        models: models,
+        img: imageUrl,
+        models,
         name,
         price: decimalPrice.valueOf(),
-        category: category,
-        status: status === '1' ? true : false,
+        category,
+        status: status === '1',
       });
 
-      // Store Image Into Storage If Product Saved Successful
+      // Return created product
       return this.productRepository.findOne({ _id: insertedId });
-    } catch (err) {
-      if (err instanceof HttpException) throw err;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
 
-      this.logger.error(err.message);
-      throw new InternalServerErrorException(err);
+      this.logger.error(`Create product error: ${error.message}`);
+      throw new InternalServerErrorException('Failed to create product');
     }
   }
 
   async findAll(limit?: number, page?: number) {
-    limit = limit || 10;
-    page = page || 1;
-    const skip = (page - 1) * limit;
+    const itemsPerPage = limit || 10;
+    const currentPage = page || 1;
+    const skip = (currentPage - 1) * itemsPerPage;
 
-    const result = await this.productRepository.findAll({}, { limit, skip });
-
-    return result;
+    return this.productRepository.findAll({}, { limit: itemsPerPage, skip });
   }
 
   async update(
     id: ObjectId,
     updateProductDto: UpdateProductDto,
-    img?: Express.Multer.File,
+    image?: Express.Multer.File,
   ) {
     try {
-      const product = await this.productRepository.findOne({
+      // Check if product exists
+      const existingProduct = await this.productRepository.findOne({
         _id: new ObjectId(id),
       });
+      if (!existingProduct) throw new NotFoundException('Product not found.');
 
-      if (!product) throw new NotFoundException('Product not found.');
+      // Prepare update payload
+      const updatePayload: Partial<Product> = {};
 
-      let payload: Partial<Product> = {};
-
-      for (const prop in updateProductDto) {
-        if (updateProductDto[prop] && prop === 'status') {
-          payload[prop] = updateProductDto[prop] === '1' ? true : false;
-        } else if (updateProductDto[prop] && prop === 'price') {
-          // use DecimalJs to prevent Floating Point
-          payload[prop] = new Decimal(updateProductDto[prop]).valueOf();
-        } else if (updateProductDto[prop]) {
-          payload[prop] = updateProductDto[prop];
+      // Process each field from DTO
+      for (const [key, value] of Object.entries(updateProductDto)) {
+        if (value !== undefined && value !== null) {
+          if (key === 'status') {
+            updatePayload[key] = value === '1';
+          } else if (key === 'price') {
+            updatePayload[key] = new Decimal(value).valueOf();
+          } else {
+            updatePayload[key] = value;
+          }
         }
       }
 
-      if (img) {
-        this.removeFile(product.img || '');
+      // Handle image update if provided
+      if (image) {
+        // Remove old image
+        this.removeImageFile(existingProduct.img || '');
 
-        const { fullPath, urlPath } = this.genFileName(img);
-        this.uploadFile(await this.compressingImg(img.buffer), fullPath);
-        payload['img'] = urlPath;
+        // Process and save new image
+        const compressedImage = await this.compressImage(image.buffer);
+        const { fullPath, urlPath } = this.generateFileName(image);
+
+        this.saveImageFile(compressedImage, fullPath);
+        updatePayload.img = urlPath;
       }
 
-      // get Product and Update them
-      const result = await this.productRepository.update(
+      // Update product in database
+      return this.productRepository.update(
         { _id: new ObjectId(id) },
-        payload,
+        updatePayload,
       );
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
 
-      return result;
-    } catch (err) {
-      if (err instanceof HttpException) throw err;
-      this.logger.error(err.message);
-      throw new InternalServerErrorException();
+      this.logger.error(`Update product error: ${error.message}`);
+      throw new InternalServerErrorException('Failed to update product');
     }
   }
 
@@ -174,7 +215,8 @@ export class ProductService {
 
     if (!product) throw new NotFoundException('Product not found.');
 
-    this.removeFile(product.img || '');
+    // Remove associated image file
+    this.removeImageFile(product.img || '');
 
     return product;
   }
@@ -186,12 +228,43 @@ export class ProductService {
 
     if (!product) throw new NotFoundException('Product not found.');
 
-    return {
-      status: product.status,
-    };
+    return { status: product.status };
   }
 
-  private compressingImg(img: Buffer) {
-    return sharp(img).resize(200, 200).toBuffer();
+  /**
+   * Update only the status of a product
+   * @param id - Product ID
+   * @param status - New status value ('1' for true, '0' for false)
+   * @returns Updated product
+   */
+  async updateStatus(id: string, status: boolean) {
+    try {
+      // Check if product exists
+      const existingProduct = await this.productRepository.findOne({
+        _id: new ObjectId(id),
+      });
+      if (!existingProduct) {
+        throw new NotFoundException('Product not found.');
+      }
+      // Update only the status field
+      const result = await this.productRepository.update(
+        { _id: new ObjectId(id) },
+        { status: status },
+      );
+
+      if (!result) {
+        throw new InternalServerErrorException(
+          'Failed to update product status',
+        );
+      }
+
+      // Return updated product
+      return this.productRepository.findOne({ _id: new ObjectId(id) });
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      this.logger.error(`Update product status error: ${error.message}`);
+      throw new InternalServerErrorException('Failed to update product status');
+    }
   }
 }

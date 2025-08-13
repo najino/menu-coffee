@@ -12,6 +12,7 @@ export function FilePipeBuilder(isRequired: boolean = true): ParseFilePipe {
       message: 'photo must be lower than 5Mb',
     })
     .build({
-      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY
+      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+      fileIsRequired:isRequired
     });
 }

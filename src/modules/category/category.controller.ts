@@ -26,9 +26,10 @@ export class CategoryController {
   @IsAuth()
   async createCategory(
     @Body() createCategoryDto: CreateCategoryDto,
-    @UploadedFile('file', CategoryFilePipeBuilder()) img?: Express.Multer.File,
+    @UploadedFile('file', CategoryFilePipeBuilder())
+    image?: Express.Multer.File,
   ) {
-    await this.categoryService.create(createCategoryDto, img);
+    await this.categoryService.create(createCategoryDto, image);
 
     return {
       msg: 'Category Saved Successfully',
@@ -52,9 +53,9 @@ export class CategoryController {
     @Param('id', MongoIdPipe) categoryId: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
     @UploadedFile('file', CategoryFilePipeBuilder(false))
-    img?: Express.Multer.File,
+    image?: Express.Multer.File,
   ) {
-    return this.categoryService.update(categoryId, updateCategoryDto, img);
+    return this.categoryService.update(categoryId, updateCategoryDto, image);
   }
 
   @Delete(':id')
