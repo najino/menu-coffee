@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
     ports:
       - ${PORT}:3000
     depends_on:
