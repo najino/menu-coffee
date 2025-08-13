@@ -20,7 +20,10 @@ import { CategoryService } from '../category/category.service';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly productRepository: ProductRepository, private readonly categoryService: CategoryService) { }
+  constructor(
+    private readonly productRepository: ProductRepository,
+    private readonly categoryService: CategoryService,
+  ) {}
 
   private logger = new Logger(ProductService.name);
 
@@ -43,8 +46,7 @@ export class ProductService {
   }
 
   private removeFile(path: string) {
-    if (!path)
-      return
+    if (!path) return;
 
     const fullPath = join(process.cwd(), path);
 
@@ -54,11 +56,12 @@ export class ProductService {
   }
 
   async getProductById(id: ObjectId) {
-    const result = await this.productRepository.findOne({ _id: new ObjectId(id) });
-    if (!result)
-      throw new NotFoundException("Product not found")
+    const result = await this.productRepository.findOne({
+      _id: new ObjectId(id),
+    });
+    if (!result) throw new NotFoundException('Product not found');
 
-    return result
+    return result;
   }
 
   async createProduct(
@@ -66,25 +69,25 @@ export class ProductService {
     img?: Express.Multer.File,
   ) {
     try {
-      const { categoryId, description, models, name, price, status } = createProductDto;
+      const { categoryId, description, models, name, price, status } =
+        createProductDto;
 
       const category = await this.categoryService.findById(categoryId);
 
-      if (!category)
-        throw new NotFoundException("Category Not Found.")
+      if (!category) throw new NotFoundException('Category Not Found.');
 
       // convert price to Decimal
       const decimalPrice = new Decimal(price).valueOf();
 
-      let urlPath = undefined;
+      let urlPath = '';
 
       if (img) {
         // compressing Img
         const buf = await this.compressingImg(img.buffer);
 
-        const { fullPath, urlPath } = this.genFileName(img);
+        const { fullPath, urlPath: url } = this.genFileName(img);
+        urlPath = url;
         this.uploadFile(buf, fullPath);
-
       }
 
       const { insertedId } = await this.productRepository.create({
@@ -122,13 +125,10 @@ export class ProductService {
     updateProductDto: UpdateProductDto,
     img?: Express.Multer.File,
   ) {
-
-
     try {
       const product = await this.productRepository.findOne({
         _id: new ObjectId(id),
       });
-
 
       if (!product) throw new NotFoundException('Product not found.');
 
@@ -146,7 +146,7 @@ export class ProductService {
       }
 
       if (img) {
-        this.removeFile(product.img || "");
+        this.removeFile(product.img || '');
 
         const { fullPath, urlPath } = this.genFileName(img);
         this.uploadFile(await this.compressingImg(img.buffer), fullPath);
@@ -174,7 +174,7 @@ export class ProductService {
 
     if (!product) throw new NotFoundException('Product not found.');
 
-    this.removeFile(product.img || "");
+    this.removeFile(product.img || '');
 
     return product;
   }

@@ -1,8 +1,8 @@
 services:
   app:
-    build: 
+    build:
       context: .
-      dockerfile: Dockerfile 
+      dockerfile: Dockerfile
     restart: always
     env_file:
       - .env
@@ -13,13 +13,13 @@ services:
     depends_on:
       - mongo_db
     volumes:
-      - public-data:/app/public
+      - ./public:/app/public
       - ./logs:/app/logs
     networks:
       - app
-  
+
   mongo_db:
-    image: mongo 
+    image: mongo
     restart: always
     networks:
       - app
@@ -31,7 +31,7 @@ services:
       - MONGO_INITDB_DATABASE=${DB_NAME}
     volumes:
       - data:/data/db
-  
+
   seed:
     build:
       context: .
@@ -45,9 +45,7 @@ services:
       - app
     depends_on:
       - mongo_db
-    command: ["pnpm","run","seed"]
-    
-
+    command: ['pnpm', 'run', 'seed']
 
 volumes:
   public-data:
@@ -55,4 +53,3 @@ volumes:
 
 networks:
   app:
-      
