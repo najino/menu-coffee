@@ -18,10 +18,5 @@ COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=build /app/dist /app/dist
 EXPOSE 3000
 
-COPY ./run.sh /run.sh
+CMD ["pnpm","run","start:prod"]
 
-RUN chmod +x /run.sh
-
-EXPOSE 3000
-
-CMD ["/run.sh"]

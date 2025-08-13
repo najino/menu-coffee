@@ -59,12 +59,12 @@ export class UserService {
   }: LoginUserDto): Promise<{ msg: string; accessToken: string }> {
     // check user
     const user = await this.userRepository.findOne({ username });
-    if (!user) throw new NotFoundException('invalid credential.');
+    if (!user) throw new ConflictException('invalid credential.');
 
     // validate password
     const isValidPassword = await compare(password, user.password);
 
-    if (!isValidPassword) throw new NotFoundException('invalid credential.');
+    if (!isValidPassword) throw new ConflictException('invalid credential.');
 
     const accessToken = await this.jwt.signAsync(
       {
