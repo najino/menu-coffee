@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseInterceptors,
@@ -18,10 +19,11 @@ import { UpdateProductDto } from './dtos/update-product.dto';
 import { MongoIdDto } from './dtos/mongo-id-param.dto';
 import { FilePipeBuilder } from './pipes/file-builder.pipe';
 import { IsAuth } from '../common/decorator/auth.decorator';
+import { MongoIdPipe } from '../common/pipes/mongoId.pipe';
 
 @Controller('products')
 export class ProductController {
-  constructor(private readonly productService: ProductService) { }
+  constructor(private readonly productService: ProductService) {}
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
@@ -38,19 +40,19 @@ export class ProductController {
     return this.productService.findAll(+limit, +page);
   }
 
-  @Get(":id")
+  @Get(':id')
   findOne(@Param() { id }: MongoIdDto) {
     return this.productService.getProductById(id);
   }
-  @Patch(':id')
+  @Put(':id')
   @IsAuth()
   @UseInterceptors(FileInterceptor('file'))
-  update(
-    @Param() { id }: MongoIdDto,
+  replaceProduct(
+    @Param('id', MongoIdPipe) id: string,
     @Body() updateProductDto: UpdateProductDto,
     @UploadedFile('file', FilePipeBuilder(false)) img?: Express.Multer.File,
   ) {
-    return this.productService.update(id, updateProductDto, img);
+    return this.productService.replaceProduct(id, updateProductDto, img);
   }
 
   @Delete(':id')

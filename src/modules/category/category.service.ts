@@ -11,9 +11,9 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { ObjectId } from 'mongodb';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { extname, join } from 'path';
-import { createWriteStream, existsSync, rmSync } from 'fs';
+import { writeFileSync, existsSync, rmSync } from 'fs';
 import * as sharp from 'sharp';
-import { Readable } from 'stream';
+import { Category } from './entity/category.entity';
 
 @Injectable()
 export class CategoryService {
@@ -21,65 +21,103 @@ export class CategoryService {
 
   private logger = new Logger(CategoryService.name);
 
-  private genFileName(file: Express.Multer.File) {
-    const ext = extname(file.originalname);
-    const fileName = Math.floor(Math.random() * 1e7 * Date.now());
-    const fullPath = join(process.cwd(), 'public', 'category', fileName + ext);
+  /**
+   * Generate unique filename for uploaded image
+   * @param file - Uploaded file object
+   * @returns Object containing full path and URL path
+   */
+  private generateFileName(file: Express.Multer.File) {
+    const fileExtension = extname(file.originalname);
+    const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+    const fullPath = join(
+      process.cwd(),
+      'public',
+      'category',
+      `${uniqueFileName}${fileExtension}`,
+    );
+    const urlPath = `/public/category/${uniqueFileName}${fileExtension}`;
 
-    return { fullPath, urlPath: `/public/category/${fileName}${ext}` };
+    return { fullPath, urlPath };
   }
 
-  private uploadFile(fileBuf: Buffer, fileName: string) {
-    const writeStream = createWriteStream(fileName);
-    Readable.from(fileBuf)
-      .pipe(writeStream)
-      .on('error', (err) => {
-        this.logger.error(err);
-        throw new BadRequestException('Error During Upload.');
-      });
+  /**
+   * Save image file to local storage using writeFileSync
+   * @param fileBuffer - Compressed image buffer
+   * @param filePath - Full path where to save the file
+   */
+  private saveImageFile(fileBuffer: Buffer, filePath: string): void {
+    try {
+      writeFileSync(filePath, fileBuffer);
+    } catch (error) {
+      this.logger.error(`Failed to save image: ${error.message}`);
+      throw new BadRequestException('Error saving image file');
+    }
   }
 
-  private removeFile(path: string) {
-    if (!path) return;
+  /**
+   * Remove image file from local storage
+   * @param imagePath - Relative path of the image to remove
+   */
+  private removeImageFile(imagePath: string): void {
+    if (!imagePath) return;
 
-    const fullPath = join(process.cwd(), path);
+    const fullPath = join(process.cwd(), imagePath);
 
-    if (existsSync(fullPath)) rmSync(fullPath);
-
-    return;
+    if (existsSync(fullPath)) {
+      try {
+        rmSync(fullPath);
+        this.logger.log(`Image removed: ${imagePath}`);
+      } catch (error) {
+        this.logger.error(`Failed to remove image: ${error.message}`);
+      }
+    }
   }
 
-  private compressingImg(img: Buffer) {
-    return sharp(img).resize(200, 200).toBuffer();
+  /**
+   * Compress and resize image to 200x200 pixels
+   * @param imageBuffer - Original image buffer
+   * @returns Compressed image buffer
+   */
+  private async compressImage(imageBuffer: Buffer): Promise<Buffer> {
+    return sharp(imageBuffer)
+      .resize(200, 200, { fit: 'cover' })
+      .jpeg({ quality: 80 })
+      .toBuffer();
   }
 
-  async create(categoryData: CreateCategoryDto, img?: Express.Multer.File) {
+  async create(categoryData: CreateCategoryDto, image?: Express.Multer.File) {
+    // Generate slug from name or use timestamp if not provided
     const slug = this.slugify(categoryData.slug) || Date.now().toString();
-    const category = await this.categoryRepository.findBySlug(slug);
-    if (category) throw new BadRequestException('Category Is Exist Before.');
+
+    // Check if category with same slug already exists
+    const existingCategory = await this.categoryRepository.findBySlug(slug);
+    if (existingCategory) {
+      throw new BadRequestException('Category already exists with this slug');
+    }
 
     try {
-      let urlPath = "'";
+      let imageUrl = '';
 
-      if (img) {
-        // compressing Img
-        const buf = await this.compressingImg(img.buffer);
+      // Process image if provided
+      if (image) {
+        const compressedImage = await this.compressImage(image.buffer);
+        const { fullPath, urlPath } = this.generateFileName(image);
 
-        const { fullPath, urlPath: url } = this.genFileName(img);
-        urlPath = url;
-        this.uploadFile(buf, fullPath);
+        this.saveImageFile(compressedImage, fullPath);
+        imageUrl = urlPath;
       }
 
+      // Create category in database
       const result = await this.categoryRepository.create({
         ...categoryData,
         slug,
-        image: urlPath,
+        image: imageUrl,
       });
 
       return result.acknowledged;
-    } catch (err) {
-      this.logger.error(err);
-      throw new InternalServerErrorException();
+    } catch (error) {
+      this.logger.error(`Create category error: ${error.message}`);
+      throw new InternalServerErrorException('Failed to create category');
     }
   }
 
@@ -89,7 +127,9 @@ export class CategoryService {
 
   async findBySlug(slug: string) {
     const result = await this.categoryRepository.findBySlug(slug);
-    if (!result) throw new NotFoundException('Category Not Found.');
+    if (!result) {
+      throw new NotFoundException('Category not found');
+    }
 
     return result;
   }
@@ -97,37 +137,58 @@ export class CategoryService {
   async update(
     id: string,
     categoryData: UpdateCategoryDto,
-    img?: Express.Multer.File,
+    image?: Express.Multer.File,
   ) {
     try {
-      const category = await this.categoryRepository.findOne({
+      // Check if category exists
+      const existingCategory = await this.categoryRepository.findOne({
         _id: new ObjectId(id),
       });
-
-      if (!category) throw new NotFoundException('Category Not Found');
-
-      if (categoryData.slug)
-        categoryData.slug = this.slugify(categoryData.slug);
-
-      let payload: any = { ...categoryData };
-
-      if (img) {
-        // Remove old image if exists
-        this.removeFile(category.image || '');
-
-        // Upload new image
-        const buf = await this.compressingImg(img.buffer);
-        const { fullPath, urlPath } = this.genFileName(img);
-        this.uploadFile(buf, fullPath);
-        payload.image = urlPath;
+      if (!existingCategory) {
+        throw new NotFoundException('Category not found');
       }
 
-      return this.categoryRepository.update({ _id: new ObjectId(id) }, payload);
-    } catch (err) {
-      if (err instanceof HttpException) throw err;
+      // Prepare update payload
+      const updatePayload: Partial<Category> = { ...categoryData };
 
-      this.logger.error(err);
-      throw new InternalServerErrorException();
+      // Process slug if provided
+      if (categoryData.slug) {
+        const existingCategoryWithSameSlug =
+          await this.categoryRepository.findBySlug(
+            this.slugify(categoryData.slug),
+          );
+        if (existingCategoryWithSameSlug) {
+          throw new BadRequestException(
+            'Category already exists with this slug',
+          );
+        }
+
+        updatePayload.slug = this.slugify(categoryData.slug);
+      }
+
+      // Handle image update if provided
+      if (image) {
+        // Remove old image if exists
+        this.removeImageFile(existingCategory.image || '');
+
+        // Process and save new image
+        const compressedImage = await this.compressImage(image.buffer);
+        const { fullPath, urlPath } = this.generateFileName(image);
+
+        this.saveImageFile(compressedImage, fullPath);
+        updatePayload.image = urlPath;
+      }
+
+      // Update category in database
+      return this.categoryRepository.update(
+        { _id: new ObjectId(id) },
+        updatePayload,
+      );
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      this.logger.error(`Update category error: ${error.message}`);
+      throw new InternalServerErrorException('Failed to update category');
     }
   }
 
@@ -136,17 +197,31 @@ export class CategoryService {
       _id: new ObjectId(id),
     });
 
-    if (!category) throw new NotFoundException('Category Not Found');
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
 
-    // Remove image file if exists
-    this.removeFile(category.image || '');
+    // Remove associated image file
+    this.removeImageFile(category.image || '');
 
     return this.categoryRepository.delete({ _id: new ObjectId(id) });
   }
 
-  private slugify(slug: string) {
-    if (!slug) return;
-    return slug.split(' ').join('-').trim();
+  /**
+   * Convert text to URL-friendly slug
+   * @param text - Text to convert to slug
+   * @returns URL-friendly slug
+   */
+  private slugify(text: string): string {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
   }
 
   async findById(id: string) {

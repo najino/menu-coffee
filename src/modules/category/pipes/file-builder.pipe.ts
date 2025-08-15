@@ -15,5 +15,6 @@ export function CategoryFilePipeBuilder(
     })
     .build({
       errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+      fileIsRequired:isRequired
     });
 }
