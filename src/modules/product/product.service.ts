@@ -234,7 +234,7 @@ export class ProductService {
   /**
    * Update only the status of a product
    * @param id - Product ID
-   * @param status - New status value ('1' for true, '0' for false)
+   * @param status - New status value
    * @returns Updated product
    */
   async updateStatus(id: string, status: boolean) {
@@ -246,6 +246,7 @@ export class ProductService {
       if (!existingProduct) {
         throw new NotFoundException('Product not found.');
       }
+
       // Update only the status field
       const result = await this.productRepository.update(
         { _id: new ObjectId(id) },
@@ -265,6 +266,91 @@ export class ProductService {
 
       this.logger.error(`Update product status error: ${error.message}`);
       throw new InternalServerErrorException('Failed to update product status');
+    }
+  }
+
+  /**
+   * Replace entire product data (PUT operation)
+   * @param id - Product ID
+   * @param productData - Complete product data to replace
+   * @param image - Optional new image file
+   * @returns Replaced product
+   */
+  async replaceProduct(
+    id: string,
+    productData: UpdateProductDto,
+    image?: Express.Multer.File,
+  ) {
+    try {
+      // Check if product exists
+      const existingProduct = await this.productRepository.findOne({
+        _id: new ObjectId(id),
+      });
+      if (!existingProduct) {
+        throw new NotFoundException('Product not found.');
+      }
+
+      // Validate category if provided
+      if (productData.categoryId) {
+        const category = await this.categoryService.findById(
+          productData.categoryId,
+        );
+        if (!category) {
+          throw new NotFoundException('Category not found.');
+        }
+      }
+
+      // Prepare complete replacement payload
+      const replacementPayload: Partial<Product> = {
+        name: productData.name,
+        description: productData.description,
+        price: productData.price
+          ? new Decimal(productData.price).valueOf()
+          : existingProduct.price,
+        models: productData.models || existingProduct.models,
+        status:
+          productData.status !== undefined
+            ? productData.status === '1'
+            : existingProduct.status,
+        category: productData.categoryId
+          ? (await this.categoryService.findById(productData.categoryId)) ||
+            existingProduct.category
+          : existingProduct.category,
+      };
+
+      // Handle image replacement if provided
+      if (image) {
+        // Remove old image
+        this.removeImageFile(existingProduct.img || '');
+
+        // Process and save new image
+        const compressedImage = await this.compressImage(image.buffer);
+        const { fullPath, urlPath } = this.generateFileName(image);
+
+        this.saveImageFile(compressedImage, fullPath);
+        replacementPayload.img = urlPath;
+      } else {
+        // Keep existing image if no new image provided
+        replacementPayload.img = existingProduct.img;
+      }
+
+      // Replace product in database
+      const result = await this.productRepository.update(
+        { _id: new ObjectId(id) },
+        replacementPayload,
+      );
+
+      if (!result) {
+        throw new InternalServerErrorException('Failed to replace product');
+      }
+
+      // Return replaced product
+      return this.productRepository.findOne({ _id: new ObjectId(id) });
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      this.logger.error(`Replace product error: ${error.message}`);
+      throw new InternalServerErrorException('Failed to replace product');
     }
   }
 }
