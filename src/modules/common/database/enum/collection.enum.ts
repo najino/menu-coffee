@@ -1,5 +1,6 @@
 export enum CollectionName {
   user = 'users',
   product = 'products',
-  category = "categories"
+  category = 'categories',
+  siteSettings = 'site_settings',
 }

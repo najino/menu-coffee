@@ -6,6 +6,7 @@ import { CommonModule } from './modules/common/common.module';
 import { ProductModule } from './modules/product/product.module';
 import { UserModule } from './modules/user/user.module';
 import { CategoryModule } from './modules/category/category.module';
+import { SettingsModule } from './modules/settings/settings.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { CategoryModule } from './modules/category/category.module';
     CommonModule,
     CategoryModule,
     JwtModule.register({}),
-    DatabaseModule
+    SettingsModule,
+    DatabaseModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}
