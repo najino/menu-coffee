@@ -90,6 +90,20 @@ export class ProductService {
       .toBuffer();
   }
 
+  /**
+   * Get total count of products
+   * @returns Total number of products
+   */
+  async getProductCount(): Promise<number> {
+    try {
+      const products = await this.productRepository.findAll();
+      return products.length;
+    } catch (error) {
+      this.logger.error(`Failed to get product count: ${error.message}`);
+      return 0;
+    }
+  }
+
   async getProductById(id: ObjectId) {
     const result = await this.productRepository.findOne({
       _id: new ObjectId(id),

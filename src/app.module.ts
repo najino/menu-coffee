@@ -7,6 +7,7 @@ import { ProductModule } from './modules/product/product.module';
 import { UserModule } from './modules/user/user.module';
 import { CategoryModule } from './modules/category/category.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { SettingsModule } from './modules/settings/settings.module';
     CategoryModule,
     JwtModule.register({}),
     SettingsModule,
-    DatabaseModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
