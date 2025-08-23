@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   HttpException,
   Injectable,
   InternalServerErrorException,
@@ -124,131 +125,157 @@ export class SettingsService {
       throw new BadRequestException('Error processing image');
     }
   }
+  /**
+   * Process site logo image for update
+   * @param file - Uploaded site logo file
+   * @param currentSettings - Current settings to get old image path
+   * @param updateSettingsDto - Settings DTO to update
+   */
+  private async processSiteLogoImageForUpdate(
+    file: Express.Multer.File,
+    currentSettings: SiteSettings,
+    updateSettingsDto: UpdateSettingsDto,
+  ): Promise<void> {
+    // Remove old site logo
+    this.removeImageFile(currentSettings.branding.siteLogo);
+
+    // Process and save new site logo
+    const processedImage = await this.processImage(file.buffer, 'logo');
+    const { fullPath, urlPath } = this.generateFileName(file, 'logo');
+    this.saveImageFile(processedImage, fullPath);
+
+    updateSettingsDto.branding.siteLogo = urlPath;
+  }
 
   /**
-   * Create initial site settings
-   * @param createSettingsDto - Settings data to create
-   * @param files - Optional uploaded files
-   * @returns Created settings
+   * Process admin logo image for update
+   * @param file - Uploaded admin logo file
+   * @param currentSettings - Current settings to get old image path
+   * @param updateSettingsDto - Settings DTO to update
+   */ private async processAdminLogoImageForUpdate(
+    file: Express.Multer.File,
+    currentSettings: SiteSettings,
+    updateSettingsDto: UpdateSettingsDto,
+  ): Promise<void> {
+    // Remove old admin logo
+    this.removeImageFile(currentSettings.branding.adminLogo);
+
+    // Process and save new admin logo
+    const processedImage = await this.processImage(file.buffer, 'logo');
+    const { fullPath, urlPath } = this.generateFileName(file, 'admin-logo');
+    this.saveImageFile(processedImage, fullPath);
+
+    updateSettingsDto.branding.adminLogo = urlPath;
+  }
+
+  /**
+   * Process favicon image for update
+   * @param file - Uploaded favicon file
+   * @param currentSettings - Current settings to get old image path
+   * @param updateSettingsDto - Settings DTO to update
    */
-  async createSettings(
-    createSettingsDto: CreateSettingsDto,
-    files?: {
-      heroImage?: Express.Multer.File;
+  private async processFaviconImageForUpdate(
+    file: Express.Multer.File,
+    currentSettings: SiteSettings,
+    updateSettingsDto: UpdateSettingsDto,
+  ): Promise<void> {
+    // Remove old favicon
+    if (currentSettings.branding.favicon) {
+      this.removeImageFile(currentSettings.branding.favicon);
+    }
+
+    // Process and save new favicon
+    const processedImage = await this.processImage(file.buffer, 'favicon');
+    const { fullPath, urlPath } = this.generateFileName(file, 'favicon');
+    this.saveImageFile(processedImage, fullPath);
+
+    updateSettingsDto.branding.favicon = urlPath;
+  }
+
+  /**
+   * Process all uploaded files for update
+   * @param files - Uploaded files object
+   * @param currentSettings - Current settings to get old image paths
+   * @param updateSettingsDto - Settings DTO to update
+   */
+  private async processUploadedFilesForUpdate(
+    files: {
       siteLogo?: Express.Multer.File;
       adminLogo?: Express.Multer.File;
       favicon?: Express.Multer.File;
     },
-  ): Promise<SiteSettings> {
-    try {
-      // Check if settings already exist
-      const existingSettings = await this.settingsRepository.exists();
-      if (existingSettings) {
-        throw new BadRequestException(
-          'Site settings already exist. Use update instead.',
-        );
-      }
+    currentSettings: SiteSettings,
+    updateSettingsDto: UpdateSettingsDto,
+  ): Promise<void> {
+    const fileProcessingTasks: Promise<void>[] = [];
 
-      // Process uploaded files
-      if (files) {
-        if (files.heroImage) {
-          const processedImage = await this.processImage(
-            files.heroImage.buffer,
-            'hero',
-          );
-          const { fullPath, urlPath } = this.generateFileName(
-            files.heroImage,
-            'hero',
-          );
-          this.saveImageFile(processedImage, fullPath);
-          createSettingsDto.heroBanner.image = urlPath;
-        }
-
-        if (files.siteLogo) {
-          const processedImage = await this.processImage(
-            files.siteLogo.buffer,
-            'logo',
-          );
-          const { fullPath, urlPath } = this.generateFileName(
-            files.siteLogo,
-            'logo',
-          );
-          this.saveImageFile(processedImage, fullPath);
-          createSettingsDto.branding.siteLogo = urlPath;
-        }
-
-        if (files.adminLogo) {
-          const processedImage = await this.processImage(
-            files.adminLogo.buffer,
-            'logo',
-          );
-          const { fullPath, urlPath } = this.generateFileName(
-            files.adminLogo,
-            'admin-logo',
-          );
-          console.log('siteLogo is :', urlPath);
-          this.saveImageFile(processedImage, fullPath);
-          createSettingsDto.branding.adminLogo = urlPath;
-        }
-
-        if (files.favicon) {
-          const processedImage = await this.processImage(
-            files.favicon.buffer,
-            'favicon',
-          );
-          const { fullPath, urlPath } = this.generateFileName(
-            files.favicon,
-            'favicon',
-          );
-          this.saveImageFile(processedImage, fullPath);
-          createSettingsDto.branding.favicon = urlPath;
-        }
-      }
-
-      // Create settings in database
-      const result = await this.settingsRepository.create(
-        createSettingsDto as SiteSettings,
+    if (files.siteLogo) {
+      fileProcessingTasks.push(
+        this.processSiteLogoImageForUpdate(
+          files.siteLogo,
+          currentSettings,
+          updateSettingsDto,
+        ),
       );
+    }
 
-      if (!result.acknowledged) {
-        throw new InternalServerErrorException(
-          'Failed to create site settings',
-        );
-      }
+    if (files.adminLogo) {
+      fileProcessingTasks.push(
+        this.processAdminLogoImageForUpdate(
+          files.adminLogo,
+          currentSettings,
+          updateSettingsDto,
+        ),
+      );
+    }
 
-      // Return created settings
-      const createdSettings = await this.settingsRepository.findActive();
-      if (!createdSettings) {
-        throw new InternalServerErrorException(
-          'Failed to retrieve created settings',
-        );
-      }
-      return createdSettings as any;
-    } catch (error) {
-      if (error instanceof HttpException) throw error;
+    if (files.favicon) {
+      fileProcessingTasks.push(
+        this.processFaviconImageForUpdate(
+          files.favicon,
+          currentSettings,
+          updateSettingsDto,
+        ),
+      );
+    }
 
-      this.logger.error(`Create settings error: ${error.message}`);
-      throw new InternalServerErrorException('Failed to create site settings');
+    // Process all files concurrently for better performance
+    if (fileProcessingTasks.length > 0) {
+      await Promise.all(fileProcessingTasks);
     }
   }
 
   /**
-   * Get current site settings
-   * @returns Current settings
+   * Update settings in database and return result
+   * @param currentSettings - Current settings with ID
+   * @param updateSettingsDto - Settings data to update
+   * @returns Updated settings
    */
-  async getCurrentSettings(): Promise<SiteSettings> {
-    try {
-      const settings = await this.settingsRepository.findActive();
-      if (!settings) {
-        throw new NotFoundException('Site settings not found');
-      }
-      return settings;
-    } catch (error) {
-      if (error instanceof HttpException) throw error;
-
-      this.logger.error(`Get settings error: ${error.message}`);
-      throw new InternalServerErrorException('Failed to get site settings');
+  private async updateSettingsInDatabase(
+    currentSettings: SiteSettings,
+    updateSettingsDto: UpdateSettingsDto,
+  ): Promise<SiteSettings> {
+    if (!currentSettings._id) {
+      throw new InternalServerErrorException('Settings ID not found');
     }
+
+    const result = await this.settingsRepository.update(
+      { _id: currentSettings._id },
+      updateSettingsDto as Partial<SiteSettings>,
+    );
+
+    if (!result) {
+      throw new InternalServerErrorException('Failed to update site settings');
+    }
+
+    const updatedSettings = await this.settingsRepository.findActive();
+    if (!updatedSettings) {
+      throw new InternalServerErrorException(
+        'Failed to retrieve updated settings',
+      );
+    }
+
+    return updatedSettings;
   }
 
   /**
@@ -260,7 +287,6 @@ export class SettingsService {
   async updateSettings(
     updateSettingsDto: UpdateSettingsDto,
     files?: {
-      heroImage?: Express.Multer.File;
       siteLogo?: Express.Multer.File;
       adminLogo?: Express.Multer.File;
       favicon?: Express.Multer.File;
@@ -269,123 +295,20 @@ export class SettingsService {
     try {
       const currentSettings = await this.getCurrentSettings();
 
-      // Process uploaded files
+      // Process uploaded files if any
       if (files) {
-        if (files.heroImage) {
-          // Remove old hero image
-          this.removeImageFile(currentSettings.heroBanner.image);
-
-          // Process and save new hero image
-          const processedImage = await this.processImage(
-            files.heroImage.buffer,
-            'hero',
-          );
-          const { fullPath, urlPath } = this.generateFileName(
-            files.heroImage,
-            'hero',
-          );
-          this.saveImageFile(processedImage, fullPath);
-
-          // Update hero banner image
-          if (!updateSettingsDto.heroBanner) {
-            updateSettingsDto.heroBanner = {};
-          }
-          updateSettingsDto.heroBanner.image = urlPath;
-        }
-
-        if (files.siteLogo) {
-          // Remove old site logo
-          this.removeImageFile(currentSettings.branding.siteLogo);
-
-          // Process and save new site logo
-          const processedImage = await this.processImage(
-            files.siteLogo.buffer,
-            'logo',
-          );
-          const { fullPath, urlPath } = this.generateFileName(
-            files.siteLogo,
-            'logo',
-          );
-          this.saveImageFile(processedImage, fullPath);
-
-          // Update site logo
-          if (!updateSettingsDto.branding) {
-            updateSettingsDto.branding = {};
-          }
-          updateSettingsDto.branding.siteLogo = urlPath;
-        }
-
-        if (files.adminLogo) {
-          // Remove old admin logo
-          this.removeImageFile(currentSettings.branding.adminLogo);
-
-          // Process and save new admin logo
-          const processedImage = await this.processImage(
-            files.adminLogo.buffer,
-            'logo',
-          );
-          const { fullPath, urlPath } = this.generateFileName(
-            files.adminLogo,
-            'admin-logo',
-          );
-          this.saveImageFile(processedImage, fullPath);
-
-          // Update admin logo
-          if (!updateSettingsDto.branding) {
-            updateSettingsDto.branding = {};
-          }
-          updateSettingsDto.branding.adminLogo = urlPath;
-        }
-
-        if (files.favicon) {
-          // Remove old favicon
-          if (currentSettings.branding.favicon) {
-            this.removeImageFile(currentSettings.branding.favicon);
-          }
-
-          // Process and save new favicon
-          const processedImage = await this.processImage(
-            files.favicon.buffer,
-            'favicon',
-          );
-          const { fullPath, urlPath } = this.generateFileName(
-            files.favicon,
-            'favicon',
-          );
-          this.saveImageFile(processedImage, fullPath);
-
-          // Update favicon
-          if (!updateSettingsDto.branding) {
-            updateSettingsDto.branding = {};
-          }
-          updateSettingsDto.branding.favicon = urlPath;
-        }
+        await this.processUploadedFilesForUpdate(
+          files,
+          currentSettings,
+          updateSettingsDto,
+        );
       }
 
-      // Update settings in database
-      if (!currentSettings._id) {
-        throw new InternalServerErrorException('Settings ID not found');
-      }
-
-      const result = await this.settingsRepository.update(
-        { _id: currentSettings._id },
-        updateSettingsDto as Partial<SiteSettings>,
+      // Update and return settings
+      return await this.updateSettingsInDatabase(
+        currentSettings,
+        updateSettingsDto,
       );
-
-      if (!result) {
-        throw new InternalServerErrorException(
-          'Failed to update site settings',
-        );
-      }
-
-      // Return updated settings
-      const updatedSettings = await this.settingsRepository.findActive();
-      if (!updatedSettings) {
-        throw new InternalServerErrorException(
-          'Failed to retrieve updated settings',
-        );
-      }
-      return updatedSettings;
     } catch (error) {
       if (error instanceof HttpException) throw error;
 
@@ -406,7 +329,6 @@ export class SettingsService {
         siteName: settings.siteName,
         siteDescription: settings.siteDescription,
         siteTitle: settings.siteTitle,
-        heroBanner: settings.heroBanner,
         colorPalette: settings.colorPalette,
         branding: {
           siteLogo: settings.branding.siteLogo,
@@ -464,7 +386,6 @@ export class SettingsService {
       }
 
       // Remove all associated images
-      this.removeImageFile(settings.heroBanner.image);
       this.removeImageFile(settings.branding.siteLogo);
       this.removeImageFile(settings.branding.adminLogo);
       if (settings.branding.favicon) {
@@ -482,6 +403,183 @@ export class SettingsService {
 
       this.logger.error(`Delete settings error: ${error.message}`);
       throw new InternalServerErrorException('Failed to delete site settings');
+    }
+  }
+
+  /**
+   * Validate that settings don't already exist
+   */
+  private async validateSettingsNotExists(): Promise<void> {
+    const existingSettings = await this.settingsRepository.exists();
+    if (existingSettings) {
+      throw new ConflictException(
+        'Site settings already exist. Use update instead.',
+      );
+    }
+  }
+
+  /**
+   * Create settings in database and return result
+   * @param createSettingsDto - Settings data to create
+   * @returns Created settings
+   */
+  private async createSettingsInDatabase(
+    createSettingsDto: CreateSettingsDto,
+  ): Promise<SiteSettings> {
+    const result = await this.settingsRepository.create(
+      createSettingsDto as SiteSettings,
+    );
+
+    if (!result.acknowledged) {
+      throw new InternalServerErrorException('Failed to create site settings');
+    }
+
+    const createdSettings = await this.settingsRepository.findActive();
+    if (!createdSettings) {
+      throw new InternalServerErrorException(
+        'Failed to retrieve created settings',
+      );
+    }
+
+    return createdSettings as any;
+  }
+
+  /**
+   * Process site logo image
+   * @param file - Uploaded site logo file
+   * @param createSettingsDto - Settings DTO to update
+   */
+  private async processSiteLogoImage(
+    file: Express.Multer.File,
+    createSettingsDto: CreateSettingsDto,
+  ): Promise<void> {
+    const processedImage = await this.processImage(file.buffer, 'logo');
+    const { fullPath, urlPath } = this.generateFileName(file, 'logo');
+
+    this.saveImageFile(processedImage, fullPath);
+    createSettingsDto.branding.siteLogo = urlPath;
+  }
+
+  /**
+   * Process admin logo image
+   * @param file - Uploaded admin logo file
+   * @param createSettingsDto - Settings DTO to update
+   */
+  private async processAdminLogoImage(
+    file: Express.Multer.File,
+    createSettingsDto: CreateSettingsDto,
+  ): Promise<void> {
+    const processedImage = await this.processImage(file.buffer, 'logo');
+    const { fullPath, urlPath } = this.generateFileName(file, 'admin-logo');
+
+    this.saveImageFile(processedImage, fullPath);
+    createSettingsDto.branding.adminLogo = urlPath;
+  }
+
+  /**
+   * Process favicon image
+   * @param file - Uploaded favicon file
+   * @param createSettingsDto - Settings DTO to update
+   */
+  private async processFaviconImage(
+    file: Express.Multer.File,
+    createSettingsDto: CreateSettingsDto,
+  ): Promise<void> {
+    const processedImage = await this.processImage(file.buffer, 'favicon');
+    const { fullPath, urlPath } = this.generateFileName(file, 'favicon');
+
+    this.saveImageFile(processedImage, fullPath);
+    createSettingsDto.branding.favicon = urlPath;
+  }
+
+  /**
+   * Process all uploaded files and update DTO
+   * @param files - Uploaded files object
+   * @param createSettingsDto - Settings DTO to update
+   */
+  private async processUploadedFiles(
+    files: {
+      siteLogo?: Express.Multer.File;
+      adminLogo?: Express.Multer.File;
+      favicon?: Express.Multer.File;
+    },
+    createSettingsDto: CreateSettingsDto,
+  ): Promise<void> {
+    const fileProcessingTasks: Promise<void>[] = [];
+
+    if (files.siteLogo) {
+      fileProcessingTasks.push(
+        this.processSiteLogoImage(files.siteLogo, createSettingsDto),
+      );
+    }
+
+    if (files.adminLogo) {
+      fileProcessingTasks.push(
+        this.processAdminLogoImage(files.adminLogo, createSettingsDto),
+      );
+    }
+
+    if (files.favicon) {
+      fileProcessingTasks.push(
+        this.processFaviconImage(files.favicon, createSettingsDto),
+      );
+    }
+
+    // Process all files concurrently for better performance
+    if (fileProcessingTasks.length > 0) {
+      await Promise.all(fileProcessingTasks);
+    }
+  }
+
+  /**
+   * Create initial site settings
+   * @param createSettingsDto - Settings data to create
+   * @param files - Optional uploaded files
+   * @returns Created settings
+   */
+  async createSettings(
+    createSettingsDto: CreateSettingsDto,
+    files?: {
+      siteLogo?: Express.Multer.File;
+      adminLogo?: Express.Multer.File;
+      favicon?: Express.Multer.File;
+    },
+  ): Promise<SiteSettings> {
+    try {
+      // Validate business rules
+      await this.validateSettingsNotExists();
+
+      // Process uploaded files if any
+      if (files) {
+        await this.processUploadedFiles(files, createSettingsDto);
+      }
+
+      // Create and return settings
+      return await this.createSettingsInDatabase(createSettingsDto);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      this.logger.error(`Create settings error: ${error.message}`);
+      throw new InternalServerErrorException('Failed to create site settings');
+    }
+  }
+
+  /**
+   * Get current site settings
+   * @returns Current settings
+   */
+  async getCurrentSettings(): Promise<SiteSettings> {
+    try {
+      const settings = await this.settingsRepository.findActive();
+      if (!settings) {
+        throw new NotFoundException('Site settings not found');
+      }
+      return settings;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      this.logger.error(`Get settings error: ${error.message}`);
+      throw new InternalServerErrorException('Failed to get site settings');
     }
   }
 }

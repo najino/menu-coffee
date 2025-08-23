@@ -6,15 +6,6 @@ export interface SiteSettings {
   siteDescription?: string; // توضیحات سایت
   siteTitle?: string; // عنوان صفحه اصلی
 
-  // Hero Banner (عکس بنر اصلی سایت)
-  heroBanner: {
-    image: string; // تصویر بنر اصلی
-    title?: string; // عنوان بنر
-    subtitle?: string; // زیرعنوان بنر
-    buttonText?: string; // متن دکمه (اختیاری)
-    buttonLink?: string; // لینک دکمه (اختیاری)
-  };
-
   // Color Palette (پلت رنگی سایت)
   colorPalette: {
     primaryColor: string; // رنگ اصلی سایت

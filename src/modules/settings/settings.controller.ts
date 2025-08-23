@@ -37,7 +37,6 @@ export class SettingsController {
   @IsAuth()
   @UseInterceptors(
     FileFieldsInterceptor([
-      { name: 'heroImage', maxCount: 1 },
       { name: 'siteLogo', maxCount: 1 },
       { name: 'adminLogo', maxCount: 1 },
       { name: 'favicon', maxCount: 1 },
@@ -47,17 +46,12 @@ export class SettingsController {
     @Body() createSettingsDto: CreateSettingsDto,
     @UploadedFiles()
     files: {
-      heroImage?: Express.Multer.File[];
       siteLogo?: Express.Multer.File[];
       adminLogo?: Express.Multer.File[];
       favicon?: Express.Multer.File[];
     },
   ) {
-    console.log('createSettingsDto is :', createSettingsDto);
-    // Validate required files for heroImage, siteLogo, and adminLogo
-    if (!files.heroImage || files.heroImage.length === 0) {
-      throw new BadRequestException('Hero image is required.');
-    }
+    // Validate required files for  siteLogo, and adminLogo
     if (!files.siteLogo || files.siteLogo.length === 0) {
       throw new BadRequestException('Site logo is required.');
     }
@@ -66,7 +60,6 @@ export class SettingsController {
     }
 
     const fileData = {
-      heroImage: files.heroImage?.[0],
       siteLogo: files.siteLogo?.[0],
       adminLogo: files.adminLogo?.[0],
       favicon: files.favicon?.[0],
@@ -113,7 +106,6 @@ export class SettingsController {
   @IsAuth()
   @UseInterceptors(
     FileFieldsInterceptor([
-      { name: 'heroImage', maxCount: 1 },
       { name: 'siteLogo', maxCount: 1 },
       { name: 'adminLogo', maxCount: 1 },
       { name: 'favicon', maxCount: 1 },
@@ -123,40 +115,33 @@ export class SettingsController {
     @Body() updateSettingsDto: UpdateSettingsDto,
     @UploadedFiles()
     files: {
-      heroImage?: Express.Multer.File[];
       siteLogo?: Express.Multer.File[];
       adminLogo?: Express.Multer.File[];
       favicon?: Express.Multer.File[];
     },
   ) {
     const fileData = {
-      heroImage: files.heroImage?.[0],
       siteLogo: files.siteLogo?.[0],
       adminLogo: files.adminLogo?.[0],
       favicon: files.favicon?.[0],
     };
 
     const settings = await this.settingsService.updateSettings(
-      updateSettingsDto,
+      {
+        ...updateSettingsDto,
+        branding: {
+          siteLogo: '',
+          adminLogo: '',
+          favicon: '',
+          logoAltText: '',
+        },
+      },
       fileData,
     );
 
     return {
       message: 'Site settings updated successfully',
       data: settings,
-    };
-  }
-
-  /**
-   * Get public site data (Public endpoint)
-   * GET /site-settings/public
-   */
-  @Get('public')
-  async getPublicSiteData() {
-    const siteData = await this.settingsService.getPublicSiteData();
-    return {
-      message: 'Public site data retrieved successfully',
-      data: siteData,
     };
   }
 

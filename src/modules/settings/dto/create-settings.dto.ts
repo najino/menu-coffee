@@ -188,14 +188,6 @@ export class CreateSettingsDto {
   siteTitle?: string;
 
   @Transform(({ value }) =>
-    validateNestedDto(value, CreateHeroBannerDto, 'heroBanner'),
-  )
-  @ValidateNested()
-  @IsNotEmpty()
-  @Type(() => CreateHeroBannerDto)
-  heroBanner: CreateHeroBannerDto;
-
-  @Transform(({ value }) =>
     validateNestedDto(value, CreateColorPaletteDto, 'colorPalette'),
   )
   @IsNotEmpty()
