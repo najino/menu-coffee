@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MongoDbService } from '../common/database/database.service';
 import { SiteSettings } from './entity/setting.entity';
-import { ObjectId } from 'mongodb';
+import { Filter, ObjectId, WithId } from 'mongodb';
 import { CollectionName } from '../common/database/enum/collection.enum';
 import { Repository } from '../common/abstract/repository.abstract';
 
@@ -28,5 +28,17 @@ export class SettingsRepository extends Repository<SiteSettings> {
   async exists(): Promise<boolean> {
     const count = await this.model.countDocuments({});
     return count > 0;
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    return (
+      (await this.model.deleteOne({ _id: new ObjectId(id) as any }))
+        .deletedCount > 0
+    );
+  }
+
+  async findOneById(id: string): Promise<SiteSettings | null> {
+    console.log('id is ', id);
+    return this.model.findOne({ _id: new ObjectId(id) as any });
   }
 }

@@ -14,6 +14,7 @@ import { SiteSettings } from './entity/setting.entity';
 import { extname, join } from 'path';
 import { writeFileSync, existsSync, rmSync } from 'fs';
 import * as sharp from 'sharp';
+import { ObjectId } from 'mongodb';
 
 @Injectable()
 export class SettingsService {
@@ -347,6 +348,10 @@ export class SettingsService {
     }
   }
 
+  private getColor(color: string): string {
+    return color.charAt(0) === '#' ? color : `#${color}`;
+  }
+
   /**
    * Get CSS variables for frontend theme
    * @returns CSS string with color variables
@@ -357,14 +362,14 @@ export class SettingsService {
 
       return `
         :root {
-          --primary-color: ${settings.colorPalette.primaryColor};
-          --text-color: ${settings.colorPalette.textColor};
-          --background-color: ${settings.colorPalette.backgroundColor || '#FFFFFF'};
-          --surface-color: ${settings.colorPalette.surfaceColor || '#F9FAFB'};
-          --border-color: ${settings.colorPalette.borderColor || '#E5E7EB'};
-          --success-color: ${settings.colorPalette.successColor || '#10B981'};
-          --warning-color: ${settings.colorPalette.warningColor || '#F59E0B'};
-          --error-color: ${settings.colorPalette.errorColor || '#EF4444'};
+          --primary-color: ${this.getColor(settings.colorPalette.primaryColor)};
+          --text-color: ${this.getColor(settings.colorPalette.textColor)};
+          --background-color: ${this.getColor(settings.colorPalette.backgroundColor || '#FFFFFF')};
+          --surface-color: ${this.getColor(settings.colorPalette.surfaceColor || '#F9FAFB')};
+          --border-color: ${this.getColor(settings.colorPalette.borderColor || '#E5E7EB')};
+          --success-color: ${this.getColor(settings.colorPalette.successColor || '#10B981')};
+          --warning-color: ${this.getColor(settings.colorPalette.warningColor || '#F59E0B')};
+          --error-color: ${this.getColor(settings.colorPalette.errorColor || '#EF4444')};
         }
       `;
     } catch (error) {
@@ -380,7 +385,7 @@ export class SettingsService {
    */
   async deleteSettings(id: string): Promise<boolean> {
     try {
-      const settings = await this.settingsRepository.findOne({ _id: id });
+      const settings = await this.settingsRepository.findOneById(id);
       if (!settings) {
         throw new NotFoundException('Site settings not found');
       }
@@ -393,7 +398,7 @@ export class SettingsService {
       }
 
       // Delete from database
-      const result = await this.settingsRepository.delete({ _id: id });
+      const result = await this.settingsRepository.deleteById(id);
       if (!result)
         throw new NotFoundException('Failed to delete site settings');
 
