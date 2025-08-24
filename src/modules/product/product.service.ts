@@ -16,6 +16,7 @@ import { ObjectId } from 'mongodb';
 import { Product } from './entity/product.entity';
 import * as sharp from 'sharp';
 import { CategoryService } from '../category/category.service';
+import { AddDiscountDto } from './dtos/discount.dto';
 
 @Injectable()
 export class ProductService {
@@ -110,7 +111,7 @@ export class ProductService {
     });
     if (!result) throw new NotFoundException('Product not found');
 
-    return result;
+    return this.serializeProduct(result);
   }
 
   async createProduct(
@@ -151,7 +152,9 @@ export class ProductService {
       });
 
       // Return created product
-      return this.productRepository.findOne({ _id: insertedId });
+      const res = await this.productRepository.findOne({ _id: insertedId });
+
+      return this.serializeProduct(res!);
     } catch (error) {
       if (error instanceof HttpException) throw error;
 
@@ -165,7 +168,12 @@ export class ProductService {
     const currentPage = page || 1;
     const skip = (currentPage - 1) * itemsPerPage;
 
-    return this.productRepository.findAll({}, { limit: itemsPerPage, skip });
+    const products = await this.productRepository.findAll(
+      {},
+      { limit: itemsPerPage, skip },
+    );
+
+    return products.map((product) => this.serializeProduct(product));
   }
 
   async update(
@@ -274,7 +282,11 @@ export class ProductService {
       }
 
       // Return updated product
-      return this.productRepository.findOne({ _id: new ObjectId(id) });
+      const res = await this.productRepository.findOne({
+        _id: new ObjectId(id),
+      });
+
+      return this.serializeProduct(res!);
     } catch (error) {
       if (error instanceof HttpException) throw error;
 
@@ -366,5 +378,113 @@ export class ProductService {
       this.logger.error(`Replace product error: ${error.message}`);
       throw new InternalServerErrorException('Failed to replace product');
     }
+  }
+
+  /**
+   * Add discount to a product
+   * @param productId - Product ID
+   * @param discountDto - Discount data
+   * @returns Updated product with discount
+   */
+  async addDiscount(productId: string, discountDto: AddDiscountDto) {
+    try {
+      const product = await this.getProductById(new ObjectId(productId));
+
+      if (!product) {
+        throw new NotFoundException('Product not found');
+      }
+
+      // Update product with discount
+      const updatedProduct = await this.productRepository.update(
+        { _id: new ObjectId(productId) },
+        {
+          discount: {
+            type: discountDto.type,
+            value: discountDto.value,
+            isActive: discountDto.isActive ?? true,
+          },
+        },
+      );
+
+      if (!updatedProduct) {
+        throw new InternalServerErrorException(
+          'Failed to update product discount',
+        );
+      }
+
+      return this.serializeProduct(updatedProduct);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      this.logger.error(`Failed to add discount: ${error.message}`);
+      throw new InternalServerErrorException(
+        'Failed to add discount to product',
+      );
+    }
+  }
+
+  /**
+   * Remove discount from a product
+   * @param productId - Product ID
+   * @param removeDiscountDto - Options for removing discount
+   * @returns Updated product without discount
+   */
+  async removeDiscount(productId: string) {
+    try {
+      const product = await this.getProductById(new ObjectId(productId));
+
+      if (!product) {
+        throw new NotFoundException('Product not found');
+      }
+
+      if (!product.discount || !product.discount.isActive) {
+        throw new BadRequestException(
+          'Product has no active discount to remove',
+        );
+      }
+
+      const updatedProduct = await this.productRepository.unset(
+        { _id: new ObjectId(productId) },
+        { discount: product.discount },
+      );
+
+      if (!updatedProduct) {
+        throw new InternalServerErrorException(
+          'Failed to remove product discount',
+        );
+      }
+
+      return 'Discount removed successfully';
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      this.logger.error(`Failed to remove discount: ${error.message}`);
+      throw new InternalServerErrorException(
+        'Failed to remove discount from product',
+      );
+    }
+  }
+
+  private calculateProductPrice(product: Product) {
+    if (!product.discount || !product.discount.isActive) return product.price;
+
+    if (product.discount.type === 'flat') {
+      return +product.price - +product.discount.value;
+    }
+
+    if (product.discount.type === 'percentage') {
+      return +product.price - (+product.price * +product.discount.value) / 100;
+    }
+  }
+
+  private serializeProduct(product: Product) {
+    return {
+      ...product,
+      price: +product.price,
+      priceWithDiscount:
+        product.discount && product.discount.isActive
+          ? this.calculateProductPrice(product)
+          : null,
+    };
   }
 }
