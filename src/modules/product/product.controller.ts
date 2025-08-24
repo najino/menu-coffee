@@ -20,6 +20,8 @@ import { MongoIdDto } from './dtos/mongo-id-param.dto';
 import { FilePipeBuilder } from './pipes/file-builder.pipe';
 import { IsAuth } from '../common/decorator/auth.decorator';
 import { MongoIdPipe } from '../common/pipes/mongoId.pipe';
+import { AddDiscountDto } from './dtos/discount.dto';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('products')
 export class ProductController {
@@ -64,5 +66,36 @@ export class ProductController {
   @Get(':id/status')
   productStatus(@Param() { id }: MongoIdDto) {
     return this.productService.status(id);
+  }
+
+  @Post(':id/discount')
+  @IsAuth()
+  @ApiOperation({
+    summary: 'Add discount to product',
+    description: 'Apply a discount to a specific product',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Discount added successfully',
+  })
+  addDiscount(
+    @Param('id', MongoIdPipe) id: string,
+    @Body() addDiscountDto: AddDiscountDto,
+  ) {
+    return this.productService.addDiscount(id, addDiscountDto);
+  }
+
+  @Delete(':id/discount')
+  @IsAuth()
+  @ApiOperation({
+    summary: 'Remove discount from product',
+    description: 'Deactivate discount for a specific product',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Discount removed successfully',
+  })
+  removeDiscount(@Param('id', MongoIdPipe) id: string) {
+    return this.productService.removeDiscount(id);
   }
 }

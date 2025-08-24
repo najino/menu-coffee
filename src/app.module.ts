@@ -8,6 +8,7 @@ import { UserModule } from './modules/user/user.module';
 import { CategoryModule } from './modules/category/category.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { HealthModule } from './modules/health/health.module';
+import { ShopAddressModule } from './modules/shop-address/shop-address.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { HealthModule } from './modules/health/health.module';
     JwtModule.register({}),
     SettingsModule,
     HealthModule,
+    ShopAddressModule,
   ],
 })
 export class AppModule {}

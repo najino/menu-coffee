@@ -3,4 +3,5 @@ export enum CollectionName {
   product = 'products',
   category = 'categories',
   siteSettings = 'site_settings',
+  shopAddress = 'shop_addresses',
 }
