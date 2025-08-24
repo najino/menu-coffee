@@ -8,7 +8,7 @@ import {
 import { IRepo } from '../interface/repository.interface';
 
 export class Repository<T extends Document> implements IRepo<T> {
-  constructor(protected readonly model: Collection<T>) { }
+  constructor(protected readonly model: Collection<T>) {}
 
   async create(payload: OptionalUnlessRequiredId<T>) {
     return this.model.insertOne(payload);
@@ -30,6 +30,13 @@ export class Repository<T extends Document> implements IRepo<T> {
     return this.model.findOneAndUpdate(
       filter,
       { $set: payload },
+      { returnDocument: 'after' },
+    );
+  }
+  async unset(filter: Filter<T>, payload: Partial<T>) {
+    return this.model.findOneAndUpdate(
+      filter,
+      { $unset: payload as any },
       { returnDocument: 'after' },
     );
   }

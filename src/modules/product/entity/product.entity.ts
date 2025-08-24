@@ -1,5 +1,5 @@
-import { ObjectId } from "mongodb";
-import { Category } from "../../category/entity/category.entity";
+import { Category } from '../../category/entity/category.entity';
+export type DiscountType = 'flat' | 'percentage';
 
 export interface Product {
   name: string;
@@ -8,5 +8,14 @@ export interface Product {
   models: string[];
   description: string;
   status: boolean;
-  category: Category
+  category: Category;
+  discount?: {
+    type: DiscountType;
+    value: number;
+    isActive: boolean;
+    appliedAt?: Date;
+    expiresAt?: Date;
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
 }
