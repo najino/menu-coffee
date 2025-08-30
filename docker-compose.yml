@@ -1,0 +1,57 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    ports:
+      - ${PORT}:3000
+    depends_on:
+      - mongo_db
+    volumes:
+      - ./public:/app/public
+      - ./logs:/app/logs
+    networks:
+      - app
+
+  mongo_db:
+    image: mongo
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - app
+    ports:
+      - ${DB_PORT}:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${DB_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD}
+      - MONGO_INITDB_DATABASE=${DB_NAME}
+    volumes:
+      - data:/data/db
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    profiles:
+      - seed
+    env_file:
+      - .env
+    networks:
+      - app
+    depends_on:
+      - mongo_db
+    command: ['pnpm', 'run', 'seed']
+
+volumes:
+  public-data:
+  data:
+
+networks:
+  app:
